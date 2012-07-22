@@ -1,0 +1,8 @@
+C:\Users\mikea\Downloads\SpPerfChart\bin\Debug\SpPerfChart.dll
+C:\Users\mikea\Downloads\SpPerfChart\bin\Debug\SpPerfChart.pdb
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\SpPerfChart.PerfChart.resources
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\ResGen.read.1.tlog
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\ResGen.write.1.tlog
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\SpPerfChart.dll
+C:\Users\mikea\Downloads\SpPerfChart\obj\Debug\SpPerfChart.pdb
