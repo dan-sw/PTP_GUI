@@ -6,6 +6,6 @@ connected to DAN3400 PTP board via Ethernet.
 PTP_GUI functionality is described in the 
 project WIKI: https://github.com/dan-sw/PTP_GUI/wiki/PTP_GUI 
 
-Refer to LICENSE.txt for PTP_GUI software license. 
+Refer to LICENSE file for PTP_GUI software license. 
 Please send all patches/notes to 
 Vladimir Drukin <vladimird@designartnetworks.com>
