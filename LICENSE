@@ -26,12 +26,14 @@ License: 		LGPLv3
 Project URL: 	http://sourceforge.net/projects/sharppcap/
 Files: 	PcapNotRunningException.cs
 		SharpPcap.dll
+		All files in directory "/SharpPcap" belong to this package.
 -------------------------------
 
 ---------- Packet.Net ---------- 
 License: 		LGPLv3
 Project URL: 	http://sourceforge.net/projects/packetnet/
 Files: 	PacketDotNet.dll
+		All files in directory "/PacketDotNet" belong to this package.
 -------------------------------
 
 ---------- Simple Performance Chart ---------- 
