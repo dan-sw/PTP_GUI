@@ -24,16 +24,21 @@ Following open source packages are used in this project.
 ---------- SharpPcap ---------- 
 License: 		LGPLv3
 Project URL: 	http://sourceforge.net/projects/sharppcap/
+Files: 	PcapNotRunningException.cs
+		SharpPcap.dll
 -------------------------------
 
 ---------- Packet.Net ---------- 
 License: 		LGPLv3
 Project URL: 	http://sourceforge.net/projects/packetnet/
+Files: 	PacketDotNet.dll
 -------------------------------
 
 ---------- Simple Performance Chart ---------- 
 License: 		LGPLv3
 Project URL: 	http://www.codeproject.com/Articles/17564/Simple-Performance-Chart
+Files:	All files in directory "/SpPerfChart" belong to this package. 
+		Note: No change was applied on these files. 
 -------------------------------
 
 
