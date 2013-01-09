@@ -18,13 +18,23 @@ namespace WindowsFormsApplication1
             MHZ40,
             MHZ28,
             MHZ20,
-            MHZ10 
+            MHZ10,
+            MHZ112
         };
 
         private static uint[] cinrThresholdsUp = { 1, 7, 9, 13, 15, 19, 24, 27, 30 };
         private static string[] modulations = { "QPSK", "16 QAM", "64 QAM", "256 QAM", "1024 QAM" };
         private static string[] upDownRatioDescr = { "1/2", "2/3", "3/4", "5/8", "6/8", "7/8", "8/10", "9/10", "13/16", "29/32", "30/32", "31/32","19/20", "31/40","17/20" };
 
+        public int id { get; private set; }
+        public string modulation { get { return modulations[modIndex]; } }
+        public string upDownRatio { get { return upDownRatioDescr[upDownRatioIndex]; } }
+        private int modIndex;
+        private int upDownRatioIndex;
+        public int tbSizeBytes { get; private set; }
+        public int shaperCode { get; private set; }
+        public uint cinrThresholdUp { get { return cinrThresholdsUp[id]; } }
+ 
 
         public static MCS[] mcsSet80 = {
                                      new MCS(1, 0, 0, 64, 120),
@@ -36,7 +46,7 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 3, 4, 384, 770),
                                      new MCS(8, 3, 5, 448, 900),
                                      new MCS(9, 4, 6, 448, 900),        //  1024 QAM 8/10 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
            //                          new MCS(11,4,10, 448, 900)         //  1024 QAM 30/32 
                                         };
         public static MCS[] mcsSet40 = {
@@ -49,8 +59,22 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 3, 4, 192, 280),
                                      new MCS(8, 3, 5, 224, 330),
                                      new MCS(9, 4, 6, 448, 900),        //  1024 QAM 8/10 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
             //                         new MCS(11,4,10, 448, 900)         //  1024 QAM 30/32 
+                                        };
+        //
+        public static MCS[] mcsMiroWaveSet4 = { 
+                                     new MCS(1, 0, 0, 64, 120),         //  QPSK 1/2             
+                                     new MCS(2, 0, 5, 96, 190),         //  QPSK 7/8
+                                     new MCS(3, 1, 2, 192, 380),        //  16 QAM 3/4
+                                     new MCS(4, 1, 5, 192, 380),        //  16 QAM 7/8 
+                                   //  new MCS(4, 2, 1, 256, 510),        //  64 QAM 2/3   
+                                     new MCS(5, 2, 2, 256, 510),        //  64 QAM 3/4  
+                                     new MCS(6, 2, 5, 320, 640),        //  64 QAM 7/8
+                                     new MCS(7, 3, 3, 384, 770),        //  256 QAM 5/8 
+                                     new MCS(8, 3, 5, 448, 900),        //  256 QAM 7/8 
+                                     new MCS(9,3, 8, 448, 900),        //  256 QAM 13/16
+                                     new MCS(10,4, 12, 448, 900)        //  1024 QAM 19/20
                                         };
         public static MCS[] mcsMiroWaveSet3 = {
                                      new MCS(1, 0, 0, 64, 120),         //  QPSK 1/2
@@ -62,7 +86,7 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 4, 6, 384, 770),        //  1024 QAM 8/10 
                                      new MCS(8, 4, 14, 448, 900),        //  1024 QAM 17/20 
                                      new MCS(9, 4, 5, 448, 900),        //  1024 QAM 7/8 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
             //                         new MCS(11,4,12, 448, 900)         //  1024 QAM 30/32 
                                               };
         public static MCS[] mcsMiroWaveSet2 = {
@@ -75,7 +99,7 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 3,10, 384, 770),        //  256 QAM 30/32 
                                      new MCS(8, 4,13, 448, 900),        //  1024 QAM 31/40 
                                      new MCS(9, 4, 6, 448, 900),        //  1024 QAM 8/10 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
             //                         new MCS(11,4,12, 448, 900)         //  1024 QAM 30/32 
                                         };
         public static MCS[] mcsMiroWaveSet1 = {
@@ -88,10 +112,10 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 3, 4, 384, 770),
                                      new MCS(8, 3, 5, 448, 900),
                                      new MCS(9, 4, 6, 448, 900),        //  1024 QAM 8/10 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
-                //                     new MCS(11,4,12, 448, 900)         //  1024 QAM 30/32 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
+            //                         new MCS(11,4,12, 448, 900)         //  1024 QAM 30/32 
                                         };
-
+        //equal to mcsMiroWaveSet2
         public static MCS[] Current_MCS_scheme = {
                                     new MCS(1, 0, 0, 64, 120),         //  QPSK 1/2
                                      new MCS(2, 1,11, 96, 190),         //  16 QAM 30/32
@@ -102,7 +126,7 @@ namespace WindowsFormsApplication1
                                      new MCS(7, 3,10, 384, 770),        //  256 QAM 30/32 
                                      new MCS(8, 4,13, 448, 900),        //  1024 QAM 31/40 
                                      new MCS(9, 4, 6, 448, 900),        //  1024 QAM 8/10 
-                                     new MCS(10,4, 7, 448, 900),        //  1024 QAM 9/10 
+                                     new MCS(10,4, 7, 448, 900)        //  1024 QAM 9/10 
             //                         new MCS(11,4,10, 448, 900)         //  1024 QAM 30/32 
                                         };
 
@@ -119,7 +143,7 @@ namespace WindowsFormsApplication1
 
         public static MCS getMCS(BANDWIDTH b, uint id)
         {
-            // Note assumption that all bandwidths have same number of modes
+            // Note assumption that all bandwidths have same number of modes - 10 MCS's
             if (id < 1)
             {
                 id = 1;
@@ -134,7 +158,7 @@ namespace WindowsFormsApplication1
         }
         
 
-        public static void Current_MCS(bool Specific_BW_MCS, BANDWIDTH BW)
+        public static void Current_MCS(bool Specific_BW_MCS, BANDWIDTH BW, int MCSSetIndex)
         {
             if (Specific_BW_MCS)
             {
@@ -150,7 +174,8 @@ namespace WindowsFormsApplication1
             }
             else
             {
-                switch (FormNodeProperties.instance.MCSSet)
+                //switch (FormNodeProperties.instance.MCSSet)
+                switch (MCSSetIndex)
                 {
                     case (1): Current_MCS_scheme = mcsMiroWaveSet1;
                         break;
@@ -158,12 +183,11 @@ namespace WindowsFormsApplication1
                         break;
                     case (3): Current_MCS_scheme = mcsMiroWaveSet3;
                         break;
+                    case (4): Current_MCS_scheme = mcsMiroWaveSet4;
+                        break;
+                    default: Current_MCS_scheme = mcsMiroWaveSet2;
+                        break;
                 }
-//}
-//if (FormNodeProperties.instance.MCSSet == 1)
-//{ Current_MCS_scheme = mcsMiroWaveSet2; }
-//else
-//{ Current_MCS_scheme = mcsMiroWaveSet1; }
             }
         }
 
@@ -215,7 +239,10 @@ namespace WindowsFormsApplication1
                     break;
                 case "1024 QAM":
                     bit = 10;
-                    break;               
+                    break;   
+                default:
+                    bit = 2;
+                    break;
             }
 
             double Tput = 0;
@@ -225,19 +252,6 @@ namespace WindowsFormsApplication1
             return Tput;
         }
 
-        public int id { get; private set; }
-        public string modulation { get { return modulations[modIndex]; }}
-        public string upDownRatio { get { return upDownRatioDescr[upDownRatioIndex]; } }
-        private int modIndex;
-        private int upDownRatioIndex;
-        public int tbSizeBytes { get; private set; }
-        public int shaperCode { get; private set; }
-        public uint cinrThresholdUp { 
-            get {
-                return cinrThresholdsUp[id];
-            }
-        }
- 
         private MCS(int id, int mod, int upDownIndex, int tbSize, int shaperCode)
         {
         //    if (id >= cinrThresholdsUp.Length)

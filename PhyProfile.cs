@@ -36,9 +36,26 @@ namespace WindowsFormsApplication1
                 new PhyProfile ("Microwave", 28, "FDD", 2, "XPIC"),                    //17
                 new PhyProfile ("Microwave", 28, "FDD", 2, "XPIC"),                    //18
                 new PhyProfile ("Microwave", 28, "FDD", 2, "XPIC"),                    //19
-                new PhyProfile ("40Mhz FDD NLOS", 40, "FDD", 20, "XPIC"),              //20
-                new PhyProfile ("20Mhz FDD NLOS", 20, "FDD", 20, "XPIC"),              //21
-                new PhyProfile ("10Mhz FDD NLOS", 10, "FDD", 20, "XPIC")               //22
+                new PhyProfile ("40Mhz NLOS", 40, "FDD", 20, "XPIC"),                  //20
+                new PhyProfile ("20Mhz NLOS", 20, "FDD", 20, "XPIC"),                  //21
+                new PhyProfile ("10Mhz NLOS", 10, "FDD", 20, "XPIC"),                  //22
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //23
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //24
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //25
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //26
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //27
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //28
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //29
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //30
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //31
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //32
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //33
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //34
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //35
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //36
+                new PhyProfile ("None", 10, "FDD", 20, "None"),                        //37
+                new PhyProfile ("109Mhz E-Band", 109, "FDD", 20, "XPIC"),              //38
+                new PhyProfile ("112Mhz E-Band", 112, "FDD", 20, "XPIC")               //39
                                               };
 
         private PhyProfile(string name, int bandwidth, string duplexmode, int range, string ant)

@@ -114,7 +114,6 @@ partial class FormSystemStatus
             this.radioButtonRSSI1 = new System.Windows.Forms.RadioButton();
             this.radioButtonRSSI2 = new System.Windows.Forms.RadioButton();
             this.panelPhySectionSeparator = new System.Windows.Forms.Panel();
-            this.checkBoxStartLog = new System.Windows.Forms.CheckBox();
             this.labelPHY = new System.Windows.Forms.Label();
             this.toolTipTBs = new System.Windows.Forms.ToolTip(this.components);
             this.toolTipMSC = new System.Windows.Forms.ToolTip(this.components);
@@ -122,13 +121,13 @@ partial class FormSystemStatus
             this.tableLayoutPanelWholeForm = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanelLinkStatus = new System.Windows.Forms.TableLayoutPanel();
             this.panelLinkPllLock = new System.Windows.Forms.Panel();
-            this.panelLinkTxOn = new System.Windows.Forms.Panel();
-            this.panelLinkTimingLoop = new System.Windows.Forms.Panel();
             this.labelLinkPllLock = new System.Windows.Forms.Label();
+            this.panelLinkTxOn = new System.Windows.Forms.Panel();
             this.labelLinkTxOn = new System.Windows.Forms.Label();
+            this.panelLinkTimingLoop = new System.Windows.Forms.Panel();
             this.labelLinkTimingLoop = new System.Windows.Forms.Label();
-            this.labelLinkSync = new System.Windows.Forms.Label();
-            this.panelLinkSync = new System.Windows.Forms.Panel();
+            this.labelLinkStatus = new System.Windows.Forms.Label();
+            this.labelRLMLinkStatus = new System.Windows.Forms.Label();
             this.tableLayoutPanelGMAC = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanelGraphic = new System.Windows.Forms.TableLayoutPanel();
             this.groupBoxSTO = new System.Windows.Forms.GroupBox();
@@ -136,16 +135,12 @@ partial class FormSystemStatus
             this.textBoxSTO1 = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.groupBoxSTOVar = new System.Windows.Forms.GroupBox();
-            this.textBoxSTOVariance2 = new System.Windows.Forms.TextBox();
-            this.textBoxSTOVariance1 = new System.Windows.Forms.TextBox();
+            this.groupBoxXPI = new System.Windows.Forms.GroupBox();
+            this.textBoxXPIAnt1 = new System.Windows.Forms.TextBox();
+            this.textBoxXPIAnt0 = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.DesignArtNetworks = new System.Windows.Forms.LinkLabel();
-            this.groupBoxPLLStatus = new System.Windows.Forms.GroupBox();
-            this.textBoxPLLStatus = new System.Windows.Forms.TextBox();
-            this.groupBoxPreamblePeak = new System.Windows.Forms.GroupBox();
-            this.textBoxPreamblePeak = new System.Windows.Forms.TextBox();
             this.toolTipLinkStatus = new System.Windows.Forms.ToolTip(this.components);
             this.spPerfChart0 = new SpPerfChart.SpPerfChart();
             this.spPerfChart1 = new SpPerfChart.SpPerfChart();
@@ -173,9 +168,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelGMAC.SuspendLayout();
             this.tableLayoutPanelGraphic.SuspendLayout();
             this.groupBoxSTO.SuspendLayout();
-            this.groupBoxSTOVar.SuspendLayout();
-            this.groupBoxPLLStatus.SuspendLayout();
-            this.groupBoxPreamblePeak.SuspendLayout();
+            this.groupBoxXPI.SuspendLayout();
             this.SuspendLayout();
             // 
             // bgWrkTimer
@@ -191,7 +184,7 @@ partial class FormSystemStatus
             this.groupBoxGMAC0.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBoxGMAC0.Location = new System.Drawing.Point(3, 3);
             this.groupBoxGMAC0.Name = "groupBoxGMAC0";
-            this.groupBoxGMAC0.Size = new System.Drawing.Size(415, 227);
+            this.groupBoxGMAC0.Size = new System.Drawing.Size(415, 225);
             this.groupBoxGMAC0.TabIndex = 0;
             this.groupBoxGMAC0.TabStop = false;
             this.groupBoxGMAC0.Text = "GMAC";
@@ -214,7 +207,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelGMACleft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanelGMACleft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
             this.tableLayoutPanelGMACleft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-            this.tableLayoutPanelGMACleft.Size = new System.Drawing.Size(409, 208);
+            this.tableLayoutPanelGMACleft.Size = new System.Drawing.Size(409, 206);
             this.tableLayoutPanelGMACleft.TabIndex = 1;
             // 
             // comboBoxGraph0b
@@ -225,7 +218,7 @@ partial class FormSystemStatus
             this.comboBoxGraph0b.Items.AddRange(new object[] {
             "Rx - Good broadcast frames",
             "Rx - Good ..."});
-            this.comboBoxGraph0b.Location = new System.Drawing.Point(178, 181);
+            this.comboBoxGraph0b.Location = new System.Drawing.Point(178, 179);
             this.comboBoxGraph0b.Name = "comboBoxGraph0b";
             this.tableLayoutPanelGMACleft.SetRowSpan(this.comboBoxGraph0b, 2);
             this.comboBoxGraph0b.Size = new System.Drawing.Size(228, 21);
@@ -236,7 +229,7 @@ partial class FormSystemStatus
             // 
             this.labelGraph0Max.AutoSize = true;
             this.labelGraph0Max.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelGraph0Max.Location = new System.Drawing.Point(3, 193);
+            this.labelGraph0Max.Location = new System.Drawing.Point(3, 191);
             this.labelGraph0Max.Name = "labelGraph0Max";
             this.labelGraph0Max.Size = new System.Drawing.Size(94, 15);
             this.labelGraph0Max.TabIndex = 10;
@@ -251,7 +244,7 @@ partial class FormSystemStatus
             this.comboBoxGraph0a.Items.AddRange(new object[] {
             "GMAC0",
             "GMAC1"});
-            this.comboBoxGraph0a.Location = new System.Drawing.Point(103, 181);
+            this.comboBoxGraph0a.Location = new System.Drawing.Point(103, 179);
             this.comboBoxGraph0a.Name = "comboBoxGraph0a";
             this.comboBoxGraph0a.Size = new System.Drawing.Size(69, 21);
             this.comboBoxGraph0a.TabIndex = 7;
@@ -263,7 +256,7 @@ partial class FormSystemStatus
             this.labelGraph0Latest.BackColor = System.Drawing.Color.White;
             this.labelGraph0Latest.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.labelGraph0Latest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelGraph0Latest.Location = new System.Drawing.Point(3, 178);
+            this.labelGraph0Latest.Location = new System.Drawing.Point(3, 176);
             this.labelGraph0Latest.Name = "labelGraph0Latest";
             this.labelGraph0Latest.Size = new System.Drawing.Size(94, 15);
             this.labelGraph0Latest.TabIndex = 9;
@@ -278,7 +271,7 @@ partial class FormSystemStatus
             this.groupBoxGMAC1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupBoxGMAC1.Location = new System.Drawing.Point(424, 3);
             this.groupBoxGMAC1.Name = "groupBoxGMAC1";
-            this.groupBoxGMAC1.Size = new System.Drawing.Size(416, 227);
+            this.groupBoxGMAC1.Size = new System.Drawing.Size(416, 225);
             this.groupBoxGMAC1.TabIndex = 12;
             this.groupBoxGMAC1.TabStop = false;
             this.groupBoxGMAC1.Text = "GMAC";
@@ -301,7 +294,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelGMACright.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanelGMACright.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
             this.tableLayoutPanelGMACright.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
-            this.tableLayoutPanelGMACright.Size = new System.Drawing.Size(410, 208);
+            this.tableLayoutPanelGMACright.Size = new System.Drawing.Size(410, 206);
             this.tableLayoutPanelGMACright.TabIndex = 1;
             // 
             // comboBoxGraph1b
@@ -312,7 +305,7 @@ partial class FormSystemStatus
             this.comboBoxGraph1b.Items.AddRange(new object[] {
             "Rx - Good broadcast frames",
             "Rx - Good ..."});
-            this.comboBoxGraph1b.Location = new System.Drawing.Point(178, 181);
+            this.comboBoxGraph1b.Location = new System.Drawing.Point(178, 179);
             this.comboBoxGraph1b.Name = "comboBoxGraph1b";
             this.tableLayoutPanelGMACright.SetRowSpan(this.comboBoxGraph1b, 2);
             this.comboBoxGraph1b.Size = new System.Drawing.Size(229, 21);
@@ -327,7 +320,7 @@ partial class FormSystemStatus
             this.comboBoxGraph1a.Items.AddRange(new object[] {
             "GMAC0",
             "GMAC1"});
-            this.comboBoxGraph1a.Location = new System.Drawing.Point(103, 181);
+            this.comboBoxGraph1a.Location = new System.Drawing.Point(103, 179);
             this.comboBoxGraph1a.Name = "comboBoxGraph1a";
             this.comboBoxGraph1a.Size = new System.Drawing.Size(69, 21);
             this.comboBoxGraph1a.TabIndex = 14;
@@ -337,7 +330,7 @@ partial class FormSystemStatus
             // 
             this.labelGraph1Max.AutoSize = true;
             this.labelGraph1Max.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelGraph1Max.Location = new System.Drawing.Point(3, 193);
+            this.labelGraph1Max.Location = new System.Drawing.Point(3, 191);
             this.labelGraph1Max.Name = "labelGraph1Max";
             this.labelGraph1Max.Size = new System.Drawing.Size(94, 15);
             this.labelGraph1Max.TabIndex = 13;
@@ -350,7 +343,7 @@ partial class FormSystemStatus
             this.labelGraph1Latest.BackColor = System.Drawing.Color.White;
             this.labelGraph1Latest.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.labelGraph1Latest.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.labelGraph1Latest.Location = new System.Drawing.Point(3, 178);
+            this.labelGraph1Latest.Location = new System.Drawing.Point(3, 176);
             this.labelGraph1Latest.Name = "labelGraph1Latest";
             this.labelGraph1Latest.Size = new System.Drawing.Size(94, 15);
             this.labelGraph1Latest.TabIndex = 12;
@@ -366,7 +359,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelStatusBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
             this.tableLayoutPanelStatusBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
             this.tableLayoutPanelStatusBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanelStatusBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 67F));
+            this.tableLayoutPanelStatusBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 19F));
             this.tableLayoutPanelStatusBottom.Controls.Add(this.buttonResetSOC, 2, 0);
             this.tableLayoutPanelStatusBottom.Controls.Add(this.buttonResetCounters, 2, 0);
             this.tableLayoutPanelStatusBottom.Controls.Add(this.buttonConstellation, 1, 0);
@@ -384,18 +377,18 @@ partial class FormSystemStatus
             // buttonResetSOC
             // 
             this.buttonResetSOC.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.buttonResetSOC.Enabled = false;
-            this.buttonResetSOC.Location = new System.Drawing.Point(256, 3);
+            this.buttonResetSOC.Location = new System.Drawing.Point(274, 3);
             this.buttonResetSOC.Name = "buttonResetSOC";
             this.buttonResetSOC.Size = new System.Drawing.Size(95, 21);
             this.buttonResetSOC.TabIndex = 1;
             this.buttonResetSOC.Text = "Reset SOC";
             this.buttonResetSOC.UseVisualStyleBackColor = true;
+            this.buttonResetSOC.Click += new System.EventHandler(this.buttonResetSOC_Click);
             // 
             // buttonResetCounters
             // 
             this.buttonResetCounters.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.buttonResetCounters.Location = new System.Drawing.Point(445, 3);
+            this.buttonResetCounters.Location = new System.Drawing.Point(475, 3);
             this.buttonResetCounters.Name = "buttonResetCounters";
             this.buttonResetCounters.Size = new System.Drawing.Size(95, 21);
             this.buttonResetCounters.TabIndex = 0;
@@ -406,7 +399,7 @@ partial class FormSystemStatus
             // buttonConstellation
             // 
             this.buttonConstellation.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.buttonConstellation.Location = new System.Drawing.Point(77, 3);
+            this.buttonConstellation.Location = new System.Drawing.Point(83, 3);
             this.buttonConstellation.Name = "buttonConstellation";
             this.buttonConstellation.Size = new System.Drawing.Size(75, 21);
             this.buttonConstellation.TabIndex = 2;
@@ -417,7 +410,7 @@ partial class FormSystemStatus
             // buttonProperties
             // 
             this.buttonProperties.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.buttonProperties.Location = new System.Drawing.Point(644, 3);
+            this.buttonProperties.Location = new System.Drawing.Point(686, 3);
             this.buttonProperties.Name = "buttonProperties";
             this.buttonProperties.Size = new System.Drawing.Size(75, 21);
             this.buttonProperties.TabIndex = 3;
@@ -428,12 +421,14 @@ partial class FormSystemStatus
             // chkBxTimerEnabled
             // 
             this.chkBxTimerEnabled.AutoSize = true;
-            this.chkBxTimerEnabled.Location = new System.Drawing.Point(779, 3);
+            this.chkBxTimerEnabled.Enabled = false;
+            this.chkBxTimerEnabled.Location = new System.Drawing.Point(827, 3);
             this.chkBxTimerEnabled.Name = "chkBxTimerEnabled";
-            this.chkBxTimerEnabled.Size = new System.Drawing.Size(61, 17);
+            this.chkBxTimerEnabled.Size = new System.Drawing.Size(13, 17);
             this.chkBxTimerEnabled.TabIndex = 20;
             this.chkBxTimerEnabled.Text = "Update";
             this.chkBxTimerEnabled.UseVisualStyleBackColor = true;
+            this.chkBxTimerEnabled.Visible = false;
             this.chkBxTimerEnabled.CheckedChanged += new System.EventHandler(this.chkBxTimerEnabled_CheckedChanged);
             // 
             // tableLayoutPanelPHY
@@ -450,7 +445,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelPHY.Controls.Add(this.groupBoxRSSI, 0, 1);
             this.tableLayoutPanelPHY.Controls.Add(this.panelPhySectionSeparator, 0, 0);
             this.tableLayoutPanelPHY.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanelPHY.Location = new System.Drawing.Point(3, 270);
+            this.tableLayoutPanelPHY.Location = new System.Drawing.Point(3, 272);
             this.tableLayoutPanelPHY.MinimumSize = new System.Drawing.Size(843, 235);
             this.tableLayoutPanelPHY.Name = "tableLayoutPanelPHY";
             this.tableLayoutPanelPHY.RowCount = 2;
@@ -674,7 +669,7 @@ partial class FormSystemStatus
             this.labelGraphPER0Nack.TabIndex = 14;
             this.labelGraphPER0Nack.Text = "00000000";
             this.labelGraphPER0Nack.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.toolTipTBs.SetToolTip(this.labelGraphPER0Nack, "Antenna 1 Rx TBs with CRC error");
+            this.toolTipTBs.SetToolTip(this.labelGraphPER0Nack, "Antenna 0 Rx TBs with CRC error");
             // 
             // groupBoxCINR
             // 
@@ -853,24 +848,12 @@ partial class FormSystemStatus
             this.panelPhySectionSeparator.BackColor = System.Drawing.Color.LightGray;
             this.panelPhySectionSeparator.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.tableLayoutPanelPHY.SetColumnSpan(this.panelPhySectionSeparator, 4);
-            this.panelPhySectionSeparator.Controls.Add(this.checkBoxStartLog);
             this.panelPhySectionSeparator.Controls.Add(this.labelPHY);
             this.panelPhySectionSeparator.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelPhySectionSeparator.Location = new System.Drawing.Point(3, 3);
             this.panelPhySectionSeparator.Name = "panelPhySectionSeparator";
             this.panelPhySectionSeparator.Size = new System.Drawing.Size(837, 24);
             this.panelPhySectionSeparator.TabIndex = 4;
-            // 
-            // checkBoxStartLog
-            // 
-            this.checkBoxStartLog.AutoSize = true;
-            this.checkBoxStartLog.Location = new System.Drawing.Point(761, 3);
-            this.checkBoxStartLog.Name = "checkBoxStartLog";
-            this.checkBoxStartLog.Size = new System.Drawing.Size(69, 17);
-            this.checkBoxStartLog.TabIndex = 1;
-            this.checkBoxStartLog.Text = "Start Log";
-            this.checkBoxStartLog.UseVisualStyleBackColor = true;
-            this.checkBoxStartLog.CheckedChanged += new System.EventHandler(this.checkBoxStartLog_CheckedChanged);
             // 
             // labelPHY
             // 
@@ -914,7 +897,7 @@ partial class FormSystemStatus
             this.tableLayoutPanelWholeForm.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanelWholeForm.Name = "tableLayoutPanelWholeForm";
             this.tableLayoutPanelWholeForm.RowCount = 5;
-            this.tableLayoutPanelWholeForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.tableLayoutPanelWholeForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 32F));
             this.tableLayoutPanelWholeForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanelWholeForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanelWholeForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 110F));
@@ -925,29 +908,31 @@ partial class FormSystemStatus
             // tableLayoutPanelLinkStatus
             // 
             this.tableLayoutPanelLinkStatus.BackColor = System.Drawing.Color.LightGray;
-            this.tableLayoutPanelLinkStatus.ColumnCount = 8;
+            this.tableLayoutPanelLinkStatus.ColumnCount = 10;
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
             this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 118F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 118F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 118F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanelLinkStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 117F));
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkPllLock, 7, 0);
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkTxOn, 5, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkPllLock, 5, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkPllLock, 4, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkTxOn, 1, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkTxOn, 0, 0);
             this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkTimingLoop, 3, 0);
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkPllLock, 6, 0);
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkTxOn, 4, 0);
             this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkTimingLoop, 2, 0);
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkSync, 0, 0);
-            this.tableLayoutPanelLinkStatus.Controls.Add(this.panelLinkSync, 1, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelLinkStatus, 9, 0);
+            this.tableLayoutPanelLinkStatus.Controls.Add(this.labelRLMLinkStatus, 8, 0);
             this.tableLayoutPanelLinkStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanelLinkStatus.Location = new System.Drawing.Point(3, 3);
             this.tableLayoutPanelLinkStatus.Name = "tableLayoutPanelLinkStatus";
             this.tableLayoutPanelLinkStatus.RowCount = 1;
             this.tableLayoutPanelLinkStatus.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanelLinkStatus.Size = new System.Drawing.Size(843, 22);
+            this.tableLayoutPanelLinkStatus.Size = new System.Drawing.Size(843, 26);
             this.tableLayoutPanelLinkStatus.TabIndex = 0;
             // 
             // panelLinkPllLock
@@ -955,88 +940,86 @@ partial class FormSystemStatus
             this.panelLinkPllLock.BackColor = System.Drawing.Color.Yellow;
             this.panelLinkPllLock.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panelLinkPllLock.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelLinkPllLock.Location = new System.Drawing.Point(729, 3);
+            this.panelLinkPllLock.Location = new System.Drawing.Point(397, 3);
             this.panelLinkPllLock.Name = "panelLinkPllLock";
-            this.panelLinkPllLock.Size = new System.Drawing.Size(111, 16);
-            this.panelLinkPllLock.TabIndex = 7;
-            this.toolTipLinkStatus.SetToolTip(this.panelLinkPllLock, "Phase-lock-loop is locked, when green.");
+            this.panelLinkPllLock.Size = new System.Drawing.Size(74, 20);
+            this.panelLinkPllLock.TabIndex = 13;
+            this.toolTipLinkStatus.SetToolTip(this.panelLinkPllLock, "Green: Phase-lock-loop is locked.");
+            // 
+            // labelLinkPllLock
+            // 
+            this.labelLinkPllLock.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.labelLinkPllLock.AutoSize = true;
+            this.labelLinkPllLock.Location = new System.Drawing.Point(327, 6);
+            this.labelLinkPllLock.Name = "labelLinkPllLock";
+            this.labelLinkPllLock.Size = new System.Drawing.Size(56, 13);
+            this.labelLinkPllLock.TabIndex = 12;
+            this.labelLinkPllLock.Text = "PLL Lock:";
+            this.labelLinkPllLock.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // panelLinkTxOn
             // 
             this.panelLinkTxOn.BackColor = System.Drawing.Color.Yellow;
             this.panelLinkTxOn.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panelLinkTxOn.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelLinkTxOn.Location = new System.Drawing.Point(518, 3);
+            this.panelLinkTxOn.Location = new System.Drawing.Point(81, 3);
             this.panelLinkTxOn.Name = "panelLinkTxOn";
-            this.panelLinkTxOn.Size = new System.Drawing.Size(112, 16);
-            this.panelLinkTxOn.TabIndex = 6;
-            this.toolTipLinkStatus.SetToolTip(this.panelLinkTxOn, "Both antenna transmitters are on, when green.");
+            this.panelLinkTxOn.Size = new System.Drawing.Size(74, 20);
+            this.panelLinkTxOn.TabIndex = 11;
+            this.toolTipLinkStatus.SetToolTip(this.panelLinkTxOn, "Green: Both antenna transmitters are on.");
+            // 
+            // labelLinkTxOn
+            // 
+            this.labelLinkTxOn.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.labelLinkTxOn.AutoSize = true;
+            this.labelLinkTxOn.Location = new System.Drawing.Point(19, 6);
+            this.labelLinkTxOn.Name = "labelLinkTxOn";
+            this.labelLinkTxOn.Size = new System.Drawing.Size(39, 13);
+            this.labelLinkTxOn.TabIndex = 10;
+            this.labelLinkTxOn.Text = "Tx On:";
+            this.labelLinkTxOn.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // panelLinkTimingLoop
             // 
             this.panelLinkTimingLoop.BackColor = System.Drawing.Color.Yellow;
             this.panelLinkTimingLoop.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panelLinkTimingLoop.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelLinkTimingLoop.Location = new System.Drawing.Point(307, 3);
+            this.panelLinkTimingLoop.Location = new System.Drawing.Point(239, 3);
             this.panelLinkTimingLoop.Name = "panelLinkTimingLoop";
-            this.panelLinkTimingLoop.Size = new System.Drawing.Size(112, 16);
+            this.panelLinkTimingLoop.Size = new System.Drawing.Size(74, 20);
             this.panelLinkTimingLoop.TabIndex = 5;
-            this.toolTipLinkStatus.SetToolTip(this.panelLinkTimingLoop, "The Timing Loop is operating properly, when green.");
-            // 
-            // labelLinkPllLock
-            // 
-            this.labelLinkPllLock.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.labelLinkPllLock.AutoSize = true;
-            this.labelLinkPllLock.Location = new System.Drawing.Point(651, 4);
-            this.labelLinkPllLock.Name = "labelLinkPllLock";
-            this.labelLinkPllLock.Size = new System.Drawing.Size(56, 13);
-            this.labelLinkPllLock.TabIndex = 3;
-            this.labelLinkPllLock.Text = "PLL Lock:";
-            this.labelLinkPllLock.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // labelLinkTxOn
-            // 
-            this.labelLinkTxOn.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.labelLinkTxOn.AutoSize = true;
-            this.labelLinkTxOn.Location = new System.Drawing.Point(449, 4);
-            this.labelLinkTxOn.Name = "labelLinkTxOn";
-            this.labelLinkTxOn.Size = new System.Drawing.Size(39, 13);
-            this.labelLinkTxOn.TabIndex = 2;
-            this.labelLinkTxOn.Text = "Tx On:";
-            this.labelLinkTxOn.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.toolTipLinkStatus.SetToolTip(this.panelLinkTimingLoop, "Green: The Timing Loop is operating properly.");
             // 
             // labelLinkTimingLoop
             // 
             this.labelLinkTimingLoop.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.labelLinkTimingLoop.AutoSize = true;
-            this.labelLinkTimingLoop.Location = new System.Drawing.Point(223, 4);
+            this.labelLinkTimingLoop.Location = new System.Drawing.Point(163, 6);
             this.labelLinkTimingLoop.Name = "labelLinkTimingLoop";
             this.labelLinkTimingLoop.Size = new System.Drawing.Size(68, 13);
             this.labelLinkTimingLoop.TabIndex = 1;
             this.labelLinkTimingLoop.Text = "Timing Loop:";
             this.labelLinkTimingLoop.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // labelLinkSync
+            // labelLinkStatus
             // 
-            this.labelLinkSync.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.labelLinkSync.AutoSize = true;
-            this.labelLinkSync.Location = new System.Drawing.Point(5, 4);
-            this.labelLinkSync.Name = "labelLinkSync";
-            this.labelLinkSync.Size = new System.Drawing.Size(82, 13);
-            this.labelLinkSync.TabIndex = 0;
-            this.labelLinkSync.Text = "Sync Achieved:";
-            this.labelLinkSync.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labelLinkStatus.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.labelLinkStatus.AutoSize = true;
+            this.labelLinkStatus.Location = new System.Drawing.Point(755, 6);
+            this.labelLinkStatus.Name = "labelLinkStatus";
+            this.labelLinkStatus.Size = new System.Drawing.Size(43, 13);
+            this.labelLinkStatus.TabIndex = 8;
+            this.labelLinkStatus.Text = "------------";
             // 
-            // panelLinkSync
+            // labelRLMLinkStatus
             // 
-            this.panelLinkSync.BackColor = System.Drawing.Color.Yellow;
-            this.panelLinkSync.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.panelLinkSync.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelLinkSync.Location = new System.Drawing.Point(96, 3);
-            this.panelLinkSync.Name = "panelLinkSync";
-            this.panelLinkSync.Size = new System.Drawing.Size(112, 16);
-            this.panelLinkSync.TabIndex = 4;
-            this.toolTipLinkStatus.SetToolTip(this.panelLinkSync, "Synchronization has been achieved, when green.");
+            this.labelRLMLinkStatus.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.labelRLMLinkStatus.AutoSize = true;
+            this.labelRLMLinkStatus.Location = new System.Drawing.Point(639, 6);
+            this.labelRLMLinkStatus.Name = "labelRLMLinkStatus";
+            this.labelRLMLinkStatus.Size = new System.Drawing.Size(63, 13);
+            this.labelRLMLinkStatus.TabIndex = 9;
+            this.labelRLMLinkStatus.Text = "Link Status:";
             // 
             // tableLayoutPanelGMAC
             // 
@@ -1046,28 +1029,24 @@ partial class FormSystemStatus
             this.tableLayoutPanelGMAC.Controls.Add(this.groupBoxGMAC0, 0, 0);
             this.tableLayoutPanelGMAC.Controls.Add(this.groupBoxGMAC1, 1, 0);
             this.tableLayoutPanelGMAC.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanelGMAC.Location = new System.Drawing.Point(3, 31);
+            this.tableLayoutPanelGMAC.Location = new System.Drawing.Point(3, 35);
             this.tableLayoutPanelGMAC.Name = "tableLayoutPanelGMAC";
             this.tableLayoutPanelGMAC.RowCount = 1;
             this.tableLayoutPanelGMAC.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanelGMAC.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 233F));
-            this.tableLayoutPanelGMAC.Size = new System.Drawing.Size(843, 233);
+            this.tableLayoutPanelGMAC.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 231F));
+            this.tableLayoutPanelGMAC.Size = new System.Drawing.Size(843, 231);
             this.tableLayoutPanelGMAC.TabIndex = 1;
             // 
             // tableLayoutPanelGraphic
             // 
             this.tableLayoutPanelGraphic.BackColor = System.Drawing.Color.White;
-            this.tableLayoutPanelGraphic.ColumnCount = 5;
-            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 60F));
-            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 5F));
-            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 5F));
-            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
-            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15F));
-            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxSTO, 3, 0);
-            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxSTOVar, 1, 0);
+            this.tableLayoutPanelGraphic.ColumnCount = 2;
+            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 74.2586F));
+            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25.7414F));
+            this.tableLayoutPanelGraphic.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxSTO, 1, 0);
+            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxXPI, 1, 2);
             this.tableLayoutPanelGraphic.Controls.Add(this.DesignArtNetworks, 0, 0);
-            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxPLLStatus, 1, 2);
-            this.tableLayoutPanelGraphic.Controls.Add(this.groupBoxPreamblePeak, 3, 2);
             this.tableLayoutPanelGraphic.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanelGraphic.Location = new System.Drawing.Point(3, 509);
             this.tableLayoutPanelGraphic.Name = "tableLayoutPanelGraphic";
@@ -1082,17 +1061,16 @@ partial class FormSystemStatus
             // groupBoxSTO
             // 
             this.groupBoxSTO.BackColor = System.Drawing.SystemColors.Control;
-            this.tableLayoutPanelGraphic.SetColumnSpan(this.groupBoxSTO, 2);
             this.groupBoxSTO.Controls.Add(this.textBoxSTO2);
             this.groupBoxSTO.Controls.Add(this.textBoxSTO1);
             this.groupBoxSTO.Controls.Add(this.label1);
             this.groupBoxSTO.Controls.Add(this.label2);
             this.groupBoxSTO.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxSTO.Location = new System.Drawing.Point(592, 3);
+            this.groupBoxSTO.Location = new System.Drawing.Point(628, 3);
             this.groupBoxSTO.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
             this.groupBoxSTO.Name = "groupBoxSTO";
             this.tableLayoutPanelGraphic.SetRowSpan(this.groupBoxSTO, 2);
-            this.groupBoxSTO.Size = new System.Drawing.Size(248, 49);
+            this.groupBoxSTO.Size = new System.Drawing.Size(212, 49);
             this.groupBoxSTO.TabIndex = 26;
             this.groupBoxSTO.TabStop = false;
             this.groupBoxSTO.Text = "STO ";
@@ -1133,42 +1111,41 @@ partial class FormSystemStatus
             this.label2.TabIndex = 21;
             this.label2.Text = "Ant 0:";
             // 
-            // groupBoxSTOVar
+            // groupBoxXPI
             // 
-            this.groupBoxSTOVar.BackColor = System.Drawing.SystemColors.Control;
-            this.tableLayoutPanelGraphic.SetColumnSpan(this.groupBoxSTOVar, 2);
-            this.groupBoxSTOVar.Controls.Add(this.textBoxSTOVariance2);
-            this.groupBoxSTOVar.Controls.Add(this.textBoxSTOVariance1);
-            this.groupBoxSTOVar.Controls.Add(this.label11);
-            this.groupBoxSTOVar.Controls.Add(this.label10);
-            this.groupBoxSTOVar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxSTOVar.Location = new System.Drawing.Point(508, 3);
-            this.groupBoxSTOVar.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
-            this.groupBoxSTOVar.Name = "groupBoxSTOVar";
-            this.tableLayoutPanelGraphic.SetRowSpan(this.groupBoxSTOVar, 2);
-            this.groupBoxSTOVar.Size = new System.Drawing.Size(78, 49);
-            this.groupBoxSTOVar.TabIndex = 25;
-            this.groupBoxSTOVar.TabStop = false;
-            this.groupBoxSTOVar.Text = "STO Variance";
-            this.groupBoxSTOVar.Visible = false;
+            this.groupBoxXPI.BackColor = System.Drawing.SystemColors.Control;
+            this.groupBoxXPI.Controls.Add(this.textBoxXPIAnt1);
+            this.groupBoxXPI.Controls.Add(this.textBoxXPIAnt0);
+            this.groupBoxXPI.Controls.Add(this.label11);
+            this.groupBoxXPI.Controls.Add(this.label10);
+            this.groupBoxXPI.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBoxXPI.Location = new System.Drawing.Point(628, 55);
+            this.groupBoxXPI.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
+            this.groupBoxXPI.Name = "groupBoxXPI";
+            this.tableLayoutPanelGraphic.SetRowSpan(this.groupBoxXPI, 2);
+            this.groupBoxXPI.Size = new System.Drawing.Size(212, 49);
+            this.groupBoxXPI.TabIndex = 25;
+            this.groupBoxXPI.TabStop = false;
+            this.groupBoxXPI.Text = "XPI";
+            this.groupBoxXPI.Visible = false;
             // 
-            // textBoxSTOVariance2
+            // textBoxXPIAnt1
             // 
-            this.textBoxSTOVariance2.Location = new System.Drawing.Point(136, 14);
-            this.textBoxSTOVariance2.Name = "textBoxSTOVariance2";
-            this.textBoxSTOVariance2.ReadOnly = true;
-            this.textBoxSTOVariance2.Size = new System.Drawing.Size(69, 20);
-            this.textBoxSTOVariance2.TabIndex = 20;
-            this.textBoxSTOVariance2.TabStop = false;
+            this.textBoxXPIAnt1.Location = new System.Drawing.Point(136, 14);
+            this.textBoxXPIAnt1.Name = "textBoxXPIAnt1";
+            this.textBoxXPIAnt1.ReadOnly = true;
+            this.textBoxXPIAnt1.Size = new System.Drawing.Size(69, 20);
+            this.textBoxXPIAnt1.TabIndex = 20;
+            this.textBoxXPIAnt1.TabStop = false;
             // 
-            // textBoxSTOVariance1
+            // textBoxXPIAnt0
             // 
-            this.textBoxSTOVariance1.Location = new System.Drawing.Point(34, 14);
-            this.textBoxSTOVariance1.Name = "textBoxSTOVariance1";
-            this.textBoxSTOVariance1.ReadOnly = true;
-            this.textBoxSTOVariance1.Size = new System.Drawing.Size(69, 20);
-            this.textBoxSTOVariance1.TabIndex = 19;
-            this.textBoxSTOVariance1.TabStop = false;
+            this.textBoxXPIAnt0.Location = new System.Drawing.Point(34, 14);
+            this.textBoxXPIAnt0.Name = "textBoxXPIAnt0";
+            this.textBoxXPIAnt0.ReadOnly = true;
+            this.textBoxXPIAnt0.Size = new System.Drawing.Size(69, 20);
+            this.textBoxXPIAnt0.TabIndex = 19;
+            this.textBoxXPIAnt0.TabStop = false;
             // 
             // label11
             // 
@@ -1197,58 +1174,8 @@ partial class FormSystemStatus
             this.DesignArtNetworks.Margin = new System.Windows.Forms.Padding(0);
             this.DesignArtNetworks.Name = "DesignArtNetworks";
             this.tableLayoutPanelGraphic.SetRowSpan(this.DesignArtNetworks, 4);
-            this.DesignArtNetworks.Size = new System.Drawing.Size(419, 104);
+            this.DesignArtNetworks.Size = new System.Drawing.Size(625, 104);
             this.DesignArtNetworks.TabIndex = 20;
-            // 
-            // groupBoxPLLStatus
-            // 
-            this.groupBoxPLLStatus.BackColor = System.Drawing.SystemColors.Control;
-            this.tableLayoutPanelGraphic.SetColumnSpan(this.groupBoxPLLStatus, 2);
-            this.groupBoxPLLStatus.Controls.Add(this.textBoxPLLStatus);
-            this.groupBoxPLLStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxPLLStatus.Location = new System.Drawing.Point(508, 55);
-            this.groupBoxPLLStatus.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
-            this.groupBoxPLLStatus.Name = "groupBoxPLLStatus";
-            this.tableLayoutPanelGraphic.SetRowSpan(this.groupBoxPLLStatus, 2);
-            this.groupBoxPLLStatus.Size = new System.Drawing.Size(78, 49);
-            this.groupBoxPLLStatus.TabIndex = 23;
-            this.groupBoxPLLStatus.TabStop = false;
-            this.groupBoxPLLStatus.Text = "PLL Status";
-            this.groupBoxPLLStatus.Visible = false;
-            // 
-            // textBoxPLLStatus
-            // 
-            this.textBoxPLLStatus.Location = new System.Drawing.Point(65, 16);
-            this.textBoxPLLStatus.Name = "textBoxPLLStatus";
-            this.textBoxPLLStatus.ReadOnly = true;
-            this.textBoxPLLStatus.Size = new System.Drawing.Size(78, 20);
-            this.textBoxPLLStatus.TabIndex = 21;
-            this.textBoxPLLStatus.TabStop = false;
-            // 
-            // groupBoxPreamblePeak
-            // 
-            this.groupBoxPreamblePeak.BackColor = System.Drawing.SystemColors.Control;
-            this.tableLayoutPanelGraphic.SetColumnSpan(this.groupBoxPreamblePeak, 2);
-            this.groupBoxPreamblePeak.Controls.Add(this.textBoxPreamblePeak);
-            this.groupBoxPreamblePeak.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxPreamblePeak.Location = new System.Drawing.Point(592, 55);
-            this.groupBoxPreamblePeak.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
-            this.groupBoxPreamblePeak.Name = "groupBoxPreamblePeak";
-            this.tableLayoutPanelGraphic.SetRowSpan(this.groupBoxPreamblePeak, 2);
-            this.groupBoxPreamblePeak.Size = new System.Drawing.Size(248, 49);
-            this.groupBoxPreamblePeak.TabIndex = 24;
-            this.groupBoxPreamblePeak.TabStop = false;
-            this.groupBoxPreamblePeak.Text = "Preamble Peak";
-            this.groupBoxPreamblePeak.Visible = false;
-            // 
-            // textBoxPreamblePeak
-            // 
-            this.textBoxPreamblePeak.Location = new System.Drawing.Point(65, 16);
-            this.textBoxPreamblePeak.Name = "textBoxPreamblePeak";
-            this.textBoxPreamblePeak.ReadOnly = true;
-            this.textBoxPreamblePeak.Size = new System.Drawing.Size(78, 20);
-            this.textBoxPreamblePeak.TabIndex = 20;
-            this.textBoxPreamblePeak.TabStop = false;
             // 
             // toolTipLinkStatus
             // 
@@ -1294,7 +1221,7 @@ partial class FormSystemStatus
             chartPen5.Width = 1F;
             this.spPerfChart0.PerfChartStyle.VerticalGridPen = chartPen5;
             this.spPerfChart0.ScaleMode = SpPerfChart.ScaleMode.Magnitude;
-            this.spPerfChart0.Size = new System.Drawing.Size(403, 172);
+            this.spPerfChart0.Size = new System.Drawing.Size(403, 170);
             this.spPerfChart0.TabIndex = 11;
             this.spPerfChart0.TimerInterval = 100;
             this.spPerfChart0.TimerMode = SpPerfChart.TimerMode.Disabled;
@@ -1336,7 +1263,7 @@ partial class FormSystemStatus
             chartPen10.Width = 1F;
             this.spPerfChart1.PerfChartStyle.VerticalGridPen = chartPen10;
             this.spPerfChart1.ScaleMode = SpPerfChart.ScaleMode.Magnitude;
-            this.spPerfChart1.Size = new System.Drawing.Size(404, 172);
+            this.spPerfChart1.Size = new System.Drawing.Size(404, 170);
             this.spPerfChart1.TabIndex = 11;
             this.spPerfChart1.TimerInterval = 100;
             this.spPerfChart1.TimerMode = SpPerfChart.TimerMode.Disabled;
@@ -1575,12 +1502,8 @@ partial class FormSystemStatus
             this.tableLayoutPanelGraphic.ResumeLayout(false);
             this.groupBoxSTO.ResumeLayout(false);
             this.groupBoxSTO.PerformLayout();
-            this.groupBoxSTOVar.ResumeLayout(false);
-            this.groupBoxSTOVar.PerformLayout();
-            this.groupBoxPLLStatus.ResumeLayout(false);
-            this.groupBoxPLLStatus.PerformLayout();
-            this.groupBoxPreamblePeak.ResumeLayout(false);
-            this.groupBoxPreamblePeak.PerformLayout();
+            this.groupBoxXPI.ResumeLayout(false);
+            this.groupBoxXPI.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1647,36 +1570,31 @@ partial class FormSystemStatus
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanelWholeForm;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanelLinkStatus;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanelGMAC;
-        private System.Windows.Forms.Panel panelLinkPllLock;
         private System.Windows.Forms.ToolTip toolTipLinkStatus;
-        private System.Windows.Forms.Panel panelLinkTxOn;
         private System.Windows.Forms.Panel panelLinkTimingLoop;
-        private System.Windows.Forms.Label labelLinkPllLock;
-        private System.Windows.Forms.Label labelLinkTxOn;
         private System.Windows.Forms.Label labelLinkTimingLoop;
-        private System.Windows.Forms.Label labelLinkSync;
-        private System.Windows.Forms.Panel panelLinkSync;
         private System.Windows.Forms.Label labelGraphRSSI1Current;
         private System.Windows.Forms.Label labelGraphCINR1Current;
         private System.Windows.Forms.Label labelGraphPER1Current;
-        private System.Windows.Forms.CheckBox chkBxTimerEnabled;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanelGraphic;
-        private System.Windows.Forms.LinkLabel DesignArtNetworks;
-        private CheckBox checkBoxStartLog;
-        private GroupBox groupBoxSTOVar;
-        private TextBox textBoxSTOVariance2;
-        private TextBox textBoxSTOVariance1;
-        private Label label11;
-        private Label label10;
         private GroupBox groupBoxSTO;
         private TextBox textBoxSTO2;
         private TextBox textBoxSTO1;
         private Label label1;
         private Label label2;
-        private GroupBox groupBoxPLLStatus;
-        private TextBox textBoxPLLStatus;
-        private GroupBox groupBoxPreamblePeak;
-        private TextBox textBoxPreamblePeak;
+        private LinkLabel DesignArtNetworks;
+        private CheckBox chkBxTimerEnabled;
+        private GroupBox groupBoxXPI;
+        private TextBox textBoxXPIAnt1;
+        private TextBox textBoxXPIAnt0;
+        private Label label11;
+        private Label label10;
+        private Label labelLinkStatus;
+        private Label labelRLMLinkStatus;
+        private Panel panelLinkPllLock;
+        private Label labelLinkPllLock;
+        private Panel panelLinkTxOn;
+        private Label labelLinkTxOn;
 
     }
 }

@@ -2,21 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Forms;
 
 namespace WindowsFormsApplication1
 {
     public class GMAC : MessageReplyListener
     {
+        #region Var
         private UInt32 baseAddress;
         private string name;
-        private const int REG_COUNT0 = 13;
-        private const int REG_COUNT1 = 11;
+        private static int REG_COUNT0 = 13;
+        private static int REG_COUNT1 = 11;
+        public int REG_GMAC0 { get { return REG_COUNT0; } }
+        public int REG_GMAC1 { get { return REG_COUNT1; } }
         private static readonly UInt32 GMAC0_BASE = 0xE5738000;
         private static readonly UInt32 GMAC1_BASE = 0xE577E000;
         private static UInt32[] registers0 = { 0xe0458054, 0xe573818c, 0xe5738190, 0xe5738194, 0xe57381c4, 0xe57381d4, 0xe57381d8, 
                     0xe0458050, 0xe573811c, 0xe5738120, 0xe573813c, 0xe5738140, 0xe5738144};
         //private UInt32[] addresses0;
-        private static String[] registerNames0 = {
+        public String[] registerNames0 = {
             "Rx - MMC ethernet packet count",
             "Rx - Good broadcast frames",
             "Rx - Good multicast frames",
@@ -33,7 +37,7 @@ namespace WindowsFormsApplication1
         private static UInt32[] registers1 = { 0xe577e18c, 0xe577e190, 0xe577e194, 0xe577e1c4, 0xe577e1d4, 0xe577e1d8, 
                     0xe577e11c, 0xe577e120, 0xe577e13c, 0xe577e140, 0xe577e144};
         //private UInt32[] addresses1;
-        private static String[] registerNames1 = {
+        public String[] registerNames1 = {
             "Rx - Good broadcast frames",
             "Rx - Good multicast frames",
             "Rx - CRC error frames",
@@ -47,138 +51,136 @@ namespace WindowsFormsApplication1
             "Tx - Good and bad broadcast frames" };
             
         // Note that these are long enough to accomodate GMAC0, which has more counters:
-        private double[] CurrentCounters = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        private double[] LastCounters = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        private double[] RateCounters = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        private TimeSpan[] LastSample = new TimeSpan[REG_COUNT0]; // ditto, long enough for GMAC0
+        public double[] CurrentCounters_GMAC0 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public double[] LastCounters_GMAC0 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public double[] RateCounters_GMAC0 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public DateTime[] Time_GMAC0 = new DateTime[REG_COUNT0]; //{ };// { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public double[] CurrentCounters_GMAC1 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public double[] LastCounters_GMAC1 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
+        public double[] RateCounters_GMAC1 = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  };
+        public DateTime[] Time_GMAC1 = new DateTime[REG_COUNT1];// { };// { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        private TimeSpan[] LastSample = new TimeSpan[REG_COUNT0]; // long enough for GMAC0
         private UInt32[] addresses;
-
-        // New for 9Nov2011: GMAC will use msg sequence number instead of comparing addresses.
-        // Although this limits the ability of each instance to only one outstanding request,
-        // it speeds the processing of replies.  And the current design only sends one request per
-        // 500 ms, and is only interested in one register at a time, so there are no
-        // negative consequences with this approach.
-        private int outstandingMessageSeq;
+        DateTime[] dateTimes = new DateTime[]{};
+        public string[] RegisterNames { get { return (this.baseAddress == GMAC0_BASE) ? registerNames0 : registerNames1; } }
+     //   public double currentCounter(int i) { return CurrentCounters_GMAC0[i]; }
+        public double rateCounter_GMAC0(int i) { return RateCounters_GMAC0[i]; }
+        public double rateCounter_GMAC1(int i) { return RateCounters_GMAC1[i]; }
 
         private System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
 
+        private static UInt32 GMAC_Reset_Counters_Address = 0xe5738100;
+
         public static GMAC gmac0 = new GMAC("GMAC 0", GMAC0_BASE);
         public static GMAC gmac1 = new GMAC("GMAC 1", GMAC1_BASE);
-        
+
+        #endregion
+
         private GMAC(string name, UInt32 addr) {
             this.name = name;
             this.baseAddress = addr;
             addresses = (this.baseAddress == GMAC0_BASE) ? registers0 : registers1;
-            outstandingMessageSeq = -1;
-            //addresses = new UInt32[REG_COUNT];
-            //for (int i = 0; i < REG_COUNT; i++)
-            //{
-            //    addresses[i] = baseAddress + registerOffsets[i];
-            //}
-            // Register for message responses
             PcapConnection.pcap.addListener(this);
             st.Start();
         }
 
-        public string[] RegisterNames { get { return (this.baseAddress == GMAC0_BASE) ? registerNames0 : registerNames1; } }
-        public double currentCounter(int i) { return CurrentCounters[i]; }
-        public double rateCounter(int i) { return RateCounters[i]; }
-        
         // Returns true if the msg represents data for this gmac; false if 
         // the address is for some other register;
         public bool MessageReplyListenerCallback(DAN_gui_msg msg, DateTime arrivalTime)
-        {
-            if (outstandingMessageSeq != msg.seq) {
-                return false;
-            }
-            double msInterval = 0;
+        {       
+            double elapsedMS = 0;
             double delta;
 
-            bool thisIsGmac0 = this.baseAddress == GMAC0_BASE;
-            bool debugOutput = false; // thisIsGmac0;
-            int registerCount = addresses.Length;
-
-            for (int i = 0; i < registerCount; i++)
+            if ((GMAC0_BASE == (0xfffff000 & msg.address)) || (0xe045805 == (0xfffffff0 & msg.address)))
             {
-                if (msg.address == addresses[i])
+                for (int i = 0; i < REG_COUNT0; i++)
                 {
-                    TimeSpan timeNow = st.Elapsed;
-                    if (debugOutput) {
-                        //Console.Write("{2} Addr[{0}]={1} (msg {3})", msg.address.ToString("X8"), msg.data[0].ToString("n"), timeNow.TotalMilliseconds.ToString("n5"), msg.seq);
-                        Console.WriteLine("{0}:{1}:{2},{3} = {4}    {5} = {6}",
-                            arrivalTime.Hour, arrivalTime.Minute, arrivalTime.Second, arrivalTime.Millisecond,
-                            arrivalTime.TimeOfDay.TotalMilliseconds, registerNames0[i], msg.data[0]);
-                    }
-                    if (LastSample[i].TotalMilliseconds == 0)
+                    if (msg.address == registers0[i])
                     {
-                        // Don't bother with Rate, yet.
-                        if (debugOutput) {
-                            Console.Write(" (last sample time 0) ");
-                        }
-                    }
-                    else
-                    {
-                        TimeSpan tSpan = arrivalTime.TimeOfDay - LastSample[i];
-                        msInterval = (double)tSpan.TotalMilliseconds;
-                        // 10/6: Not sure why I get two in a row - debug stop?  anyway, it throws the rate calc
-                        // way off, so ignore this sample
-                            // 11/9: may have been from loopback on SOC
-                        if (msInterval < 5)
+                        TimeSpan elapsed = DateTime.Now - Time_GMAC0[i];
+                        elapsedMS = elapsed.TotalMilliseconds;
+                        if (elapsedMS < 5)
                         {
-                            if (debugOutput)
-                            {
-                                Console.WriteLine("Ignoring this sample!");
-                            }
+                            // way off, so ignore this sample
                             return true;
                         }
-                        //Console.WriteLine("Reg {0} last read {1} ms ago", msg.address.ToString("X2"), tSpan.Milliseconds);
-                        if (debugOutput)
+                        LastCounters_GMAC0[i] = CurrentCounters_GMAC0[i];
+                        CurrentCounters_GMAC0[i] = msg.data[0];
+                        delta = CurrentCounters_GMAC0[i] - LastCounters_GMAC0[i];
+                        if ((elapsedMS != 0) && (delta > 0))
                         {
-                            Console.Write(" (last sample time {0} ms ago) ", tSpan.TotalMilliseconds.ToString("n5"));
-                            if (msInterval == 0)
-                            {
-                                Console.Write(" (bug? tSpan.Milliseconds = {0}, LastSample.Milliseconds = {1} )", tSpan.TotalMilliseconds, LastSample[i].TotalMilliseconds);
-                            }
+                            RateCounters_GMAC0[i] = (delta / (elapsedMS / 1000));
                         }
+                        else
+                        {
+                            RateCounters_GMAC0[i] = 0;
+                        }
+                        return true;
                     }
-                    LastSample[i] = arrivalTime.TimeOfDay;
-                    LastCounters[i] = CurrentCounters[i];
-                    CurrentCounters[i] = msg.data[0];
-                    delta = CurrentCounters[i] - LastCounters[i];
-                    if ((msInterval != 0) && (delta > 0))
-                    {
-                        RateCounters[i] = (delta / (msInterval / 1000));
-                    }
-                    else
-                    {
-                        RateCounters[i] = 0;
-                    }
-                    if (debugOutput)
-                    {
-                        Console.WriteLine(" Delta = {0}, rate = {1}", delta, RateCounters[i].ToString("n"));
-                    }
-                    outstandingMessageSeq = -1;
-                    return true;
+                    
                 }
             }
-            Console.WriteLine("BUG: invalid address in reply to {0}: {1}", this.name, msg.ToString());
-            return false;  // Did I get the seq number wrong?  return false so others can use the msg.
-        }
-
-        public void getNextValue(int selection)
-        {
-            // Sanity check
-            if (selection >= addresses.Length)
+            else if (GMAC1_BASE == (0xfffff000 & msg.address))
             {
-                Console.WriteLine("Bug: Selection index {0} out of range for gmac {1}, limited.", selection, this.name);
-                selection = addresses.Length - 1;
+                for (int i = 0; i < REG_COUNT1; i++)
+                {
+                    if (msg.address == registers1[i])
+                    {
+                        TimeSpan elapsed = DateTime.Now - Time_GMAC1[i];
+                        elapsedMS = elapsed.TotalMilliseconds;
+                        if (elapsedMS < 5)
+                        {
+                            // way off, so ignore this sample
+                            return true;
+                        }
+                        LastCounters_GMAC1[i] = CurrentCounters_GMAC1[i];
+                        CurrentCounters_GMAC1[i] = msg.data[0];
+                        delta = CurrentCounters_GMAC1[i] - LastCounters_GMAC1[i];
+                        if ((elapsedMS != 0) && (delta > 0))
+                        {
+                            RateCounters_GMAC1[i] = (delta / (elapsedMS / 1000));
+                        }
+                        else
+                        {
+                            RateCounters_GMAC1[i] = 0;
+                        }
+                        return true;
+                    }
+                }
             }
-            // request next values for 'left' graph GMCA
-            DAN_read_msg msg = new DAN_read_msg(addresses[selection]);
-            outstandingMessageSeq = msg.seq;
-            PcapConnection.pcap.sendDanMsg(msg);
+
+            return false;  // Did I get other register address?  return false so others can use the msg.
         }
 
+        public void getNextValues_GMAC0()
+        {
+            for (int i = 0; i < REG_COUNT0; i++)
+            {
+                
+                DAN_read_array_msg msg = new DAN_read_array_msg(registers0[i], 1);
+                PcapConnection.pcap.sendDanMsg(msg);
+                DateTime t1 = DateTime.Now;
+                Time_GMAC0[i] = t1;
+            }
+        }
+
+        public void getNextValues_GMAC1()
+        {
+            for (int i = 0; i < REG_COUNT1; i++)
+            {
+                DAN_read_array_msg msg = new DAN_read_array_msg(registers1[i], 1);
+                PcapConnection.pcap.sendDanMsg(msg);
+                DateTime t1 = DateTime.Now;
+                Time_GMAC1[i] = t1;
+            }
+        }
+
+        public void resetGMACCounters()
+        {
+            uint Clear_GMAC_Counters_Value = 1;
+            DAN_write_msg Msg = new DAN_write_msg(GMAC_Reset_Counters_Address, (uint)Clear_GMAC_Counters_Value);
+            PcapConnection.pcap.sendDanMsg(Msg);
+        }
 
     }
 }

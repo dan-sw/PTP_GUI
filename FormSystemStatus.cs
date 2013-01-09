@@ -1,19 +1,11 @@
 ﻿#region using
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.IO.Ports;
 using System.IO;
 using System.Windows.Forms;
 using System.Threading;
-using System.Diagnostics;
-using System.Collections;
-using SpPerfChart;
+
 
 #endregion
 
@@ -54,12 +46,11 @@ namespace WindowsFormsApplication1
         private int gmacRightSelection;
 
         private bool EVB_Connection_up = true;
-        private bool StartLog = false;
         private StreamWriter sw;
 
         public static bool MCS_per_BW = false;
 
- //       public static FormNodeProperties instance;
+        readonly UInt32 SoCResetAddress = 0xe573e000;
 
         #endregion
 
@@ -77,21 +68,24 @@ namespace WindowsFormsApplication1
             this.radioButtonRSSI1.Checked = true;
 
             // This checkbox is for development only
-            chkBxTimerEnabled.Visible = true;
-            chkBxTimerEnabled.Checked = true;  // invokes RunTimer()       
-            if (!File.Exists(@"C:\PTP\Log.csv"))
-            {
-                File.Create(@"C:\PTP\Log.csv");
-            }
-            FileStream _fs = new FileStream(@"C:\PTP\Log.csv", FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-            sw = new StreamWriter(_fs);
-            string DataToSave = "NACK0" + " , " + "ACK0" + " , " + "NACK1" + " , " + "ACK1"
-                              + " , "   + "NackCtrl" + " , " + "AckCtrl" + " , " 
-                              + "CINR1avg" + " , " + "RSSI1" + " , " + "STO1" + " , "
-                              + "CINR2avg" + " , " + "RSSI2" + " , " + "STO2" + " , "
-                              + "MCSRX" + "," + "MCSTX";
-            sw.WriteLine(DataToSave);
-
+        //    chkBxTimerEnabled.Visible = true;
+            chkBxTimerEnabled.Checked = true;  // invokes RunTimer() 
+            //try
+            //{
+            //    if (!File.Exists(@"C:\PTP\Log.csv"))
+            //    {
+            //        File.Create(@"C:\PTP\Log.csv");
+            //    }                        
+            //    FileStream _fs = new FileStream(@"C:\PTP\Log.csv", FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+            //    sw = new StreamWriter(_fs);
+            //    string DataToSave = "NACK0" + " , " + "ACK0" + " , " + "NACK1" + " , " + "ACK1"
+            //                      + " , "   + "NackCtrl" + " , " + "AckCtrl" + " , " 
+            //                      + "CINR1avg" + " , " + "RSSI1" + " , " + "STO1" + " , "
+            //                      + "CINR2avg" + " , " + "RSSI2" + " , " + "STO2" + " , "
+            //                      + "MCSRX" + "," + "MCSTX";
+            //    sw.WriteLine(DataToSave);
+            //}
+            //catch { }
             FormNodeProperties.instance.Visible = true;
             FormNodeProperties.instance.Visible = false;    
             
@@ -336,9 +330,10 @@ namespace WindowsFormsApplication1
                 // Request Data from EVB for displayed objects
                 if (!pauseFormUpdates)
                 {
-                    // request next values for GMAC graphs
-                    gmacLeft.getNextValue(gmacLeftSelection);
-                    gmacRight.getNextValue(gmacRightSelection);
+                    // request next values for GMAC's 
+                    GMAC.gmac0.getNextValues_GMAC0();
+                    GMAC.gmac1.getNextValues_GMAC1();
+                    
 
                     // Request data for Link Status
                     LinkIndicator.links.getNextValues();
@@ -347,7 +342,7 @@ namespace WindowsFormsApplication1
                     // update AMC
                     AMC.amc.getNextValues();
                     //update Debug tabs and unit control
-               //     FormNodeProperties.instance.getNextValues();
+                    //FormNodeProperties.instance.getNextValues();
                 }
             }
             catch (Exception ex)
@@ -403,18 +398,44 @@ namespace WindowsFormsApplication1
                 if (EVB_Connection_up)
                 {
                     // Link Status
-                    this.panelLinkSync.BackColor = (LinkIndicator.links.SyncAchieved ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
+                //    this.panelLinkSync.BackColor = (LinkIndicator.links.SyncAchieved ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
                     this.panelLinkTimingLoop.BackColor = (LinkIndicator.links.TimingLoopOK ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
                     this.panelLinkTxOn.BackColor = (LinkIndicator.links.TxOn ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
-                    this.panelLinkPllLock.BackColor = (LinkIndicator.links.PllLock ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
+                    if (FormNodeProperties.instance.SisoMimoMode == "Single SISO")
+                    {
+                        this.panelLinkPllLock.BackColor = (LinkIndicator.links.PllLockAnt0 ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
+                    }
+                    else
+                    {
+                        this.panelLinkPllLock.BackColor = ((LinkIndicator.links.PllLockAnt0 & LinkIndicator.links.PllLockAnt1) ? System.Drawing.Color.LightGreen : System.Drawing.Color.Yellow);
+                    }
+                    this.labelLinkStatus.Text = FormNodeProperties.instance.linkstatus;
                     // GMACs
                     updateGroupboxLabels();
-                    decimal rate = (decimal)gmacLeft.rateCounter(gmacLeftSelection);
+                    decimal rate;
+                    if (comboBoxGraph1a.SelectedIndex == 0)
+                    {
+                         rate = (decimal)gmacLeft.rateCounter_GMAC0(gmacLeftSelection);
+                    }
+                    else
+                    {
+                         rate = (decimal)gmacLeft.rateCounter_GMAC1(gmacLeftSelection);
+                        
+                    }
                     this.spPerfChart0.AddValue(rate);
                     this.labelGraph0Max.Text = String.Format("Max:  {0:0,0} f/s", spPerfChart0.MaxValue);
                     this.labelGraph0Latest.Text = String.Format("{0:0,0.0} f/s", rate);
                     // Repeat for Graph1:
-                    rate = (decimal)gmacRight.rateCounter(gmacRightSelection);
+                    if (comboBoxGraph0a.SelectedIndex == 0)
+                    {
+                        rate = (decimal)gmacRight.rateCounter_GMAC0(gmacRightSelection);
+                    }
+                    else
+                    {
+                        rate = (decimal)gmacRight.rateCounter_GMAC1(gmacRightSelection);
+
+                    }
+                 //   rate = (decimal)gmacRight.rateCounter(gmacRightSelection);
                     this.spPerfChart1.AddValue(rate);
                     this.labelGraph1Max.Text = String.Format("Max:  {0:0,0} f/s", spPerfChart1.MaxValue);
                     this.labelGraph1Latest.Text = String.Format("{0:0,0.0} f/s", rate);
@@ -422,19 +443,21 @@ namespace WindowsFormsApplication1
                     ///  RSSI Graph - range {-40..0}
                     ///  (Since graphs don't support neg numbers, for now just chart abs(x) i.e, -1x)
                     try
-                    {
-                        // TEMP DEBUG: Since both values are identical (I don't have a radio), use a randomizer
-                        // for now
-                        //double value1 = random.Next(-80, -10);
-                        //double value2 = random.NextDouble() * -80;
-                        
+                    {                        
                         if (FormNodeProperties.instance.SisoMimoMode == "Single SISO")
                         {
                             this.spPerfChartRSSI.AddValues((decimal)-PHY.phy.RSSI1, (decimal)-PHY.phy.RSSI1);
                         }
                         else
                         {
-                            this.spPerfChartRSSI.AddValues((decimal)-PHY.phy.RSSI1, (decimal)-PHY.phy.RSSI2 + 1);
+                            if ((PHY.phy.RSSI1 == 0) && (PHY.phy.RSSI2 == 0))
+                            {
+                                this.spPerfChartRSSI.AddValues((decimal)-PHY.phy.RSSI1, (decimal)-PHY.phy.RSSI2);
+                            }
+                            else
+                            {
+                                this.spPerfChartRSSI.AddValues((decimal)-PHY.phy.RSSI1, (decimal)-PHY.phy.RSSI2 + 1);
+                            }
                         }
                     }
                     catch (Exception)
@@ -445,9 +468,6 @@ namespace WindowsFormsApplication1
                     this.labelGraphRSSI1Current.Text = String.Format(" {0:0.0} dBFS", PHY.phy.RSSI2);
 
                     /// CINR  -  range {0..50}
-                    // this SOC value wasn't changing in Sim mode:  val = (decimal)(radioButtonCINR1.Checked ? PHY.phy.CINR1 : PHY.phy.CINR2);
-                    // Temporarily, use the AmcAveraged CINR:
-                    //val = (decimal)(radioButtonCINR1.Checked ? PHY.phy.CINR1avg : PHY.phy.CINR2avg); //AMC.amc.CinrAmcAveragedCinr0); 
                     try
                     {
                         decimal CINR_scale = 100.0m / (decimal)PHY.phy.CINR_Max;
@@ -458,8 +478,7 @@ namespace WindowsFormsApplication1
                         else
                         {
                             this.spPerfChartCINR.AddValues(((decimal)PHY.phy.CINR1) * CINR_scale, ((decimal)PHY.phy.CINR2) * CINR_scale + 1);
-                        }
-               //         MessageBox.Show("CINR1 = " + PHY.phy.CINR1.ToString() + " CINR2 = " + PHY.phy.CINR2.ToString());
+                        }               
                     }
                     catch (Exception)
                     {
@@ -468,10 +487,7 @@ namespace WindowsFormsApplication1
                     this.labelGraphCINR0Current.Text = String.Format(" {0:0.00} dB", PHY.phy.CINR1);
                     this.labelGraphCINR1Current.Text = String.Format(" {0:0.00} dB", PHY.phy.CINR2);
 
-                    /// PER  -  % {0..100}
-                    /// New 9Nov2011: Using values that Haim told me about, where there is a Nack and Ack
-                    /// for each antenna.
-                    /// Not sure this percentage is using the correct values.. shouldn't there be two ACK counters?
+                    /// PER  -  % {0..100}                    
                     decimal nack = (decimal)PHY.phy.NACK0;
                     decimal ack = (decimal)PHY.phy.ACK0;
                     decimal nackB = (decimal)PHY.phy.NACK1;
@@ -499,16 +515,10 @@ namespace WindowsFormsApplication1
                     this.labelGraphPER1Nack.Text = nackB.ToString();
 
                     /// AMC-Averaged CINR
-                    /// // NOTE that, since current code does not provide reliable value
-                    /// // in PHY.phy.CINR1, this value displays twice on the screen:
-                    //double amcAvg = radioButtonMCSAnt1.Checked ? PHY.phy.CINR1avg : PHY.phy.CINR2avg;
-                    // value is in db
-                    //labelCinrAvgValue.Text = String.Format("{0:0.0} db", amcAvg);
-
+                    
                     // TODO: Get bandwidth from somewhere... right now, looks like a SOC build #define
                     MCS.BANDWIDTH bw = MCS.BANDWIDTH.MHZ80;
-
-                    // TODO: Did we intend to display just TX values with this graph?
+                    
                     // Valid values are enforced by AMC
                     if (PHY.phy.controlChannelTx == null)
                     {
@@ -525,16 +535,13 @@ namespace WindowsFormsApplication1
                         try
                         {
                             // Scale based on number of defined modulations
-                         //   decimal scale = (100.0m / MCS.getMaxMCS()) * (decimal)0.85;
                             decimal scale = (100.0m / MCS.getMaxMCS());
                             decimal up_graph_offset = (decimal)-0.5;
                             // Multiply to scale {0..8} -> {0..100}, but then add 1/2 Grid_Y_, so they line up with the labels
                             // Note that this chart is in absolute mode.
                             decimal halfGridY = spPerfChartMCS.Grid_Y_Spacing / 2m; // current size of Chart
                             this.spPerfChartMCS.AddValues((mcsCurrent * scale) + up_graph_offset, (mcsCurrentB * scale) + up_graph_offset - 1);
-                            this.labelMcsLatest.Text = String.Format("{0} ({1})", mcsCurrent, MCS.getMCS(bw, mcsCurrent).ToString());
-//                          this.labelMcsLatest.Text = String.Format("{0} ({1})", mcsCurrent, MCS.getMCS(bw, mcsCurrent,  FormSystemStatus.instance.MCSset).ToString());
-                            
+                            this.labelMcsLatest.Text = String.Format("{0} ({1})", mcsCurrent, MCS.getMCS(bw, mcsCurrent).ToString());                            
                         }
                            
                         catch (Exception)
@@ -550,8 +557,7 @@ namespace WindowsFormsApplication1
                         else
                         {
                             this.labelMcsAuto.Text = "Manual:";
-                            // Note that current SOC uses antenna zero for both; but stores 2 values
-                            //    uint specifiedMcs = radioButtonMCSAnt1.Checked ? AMC.amc.McsManualId0 : AMC.amc.McsManualId1;
+                            // Note that current SOC uses antenna zero for both; but stores 2 values                            
                             uint specifiedMcs = AMC.amc.McsManualId0;
                             try
                             {
@@ -586,7 +592,11 @@ namespace WindowsFormsApplication1
                     // Restart, will no-op if pauseFormUpdates    
                     this.textBoxSTO1.Text = String.Format(" {0:0.0}", PHY.phy.STO1);
                     this.textBoxSTO2.Text = String.Format(" {0:0.0}", PHY.phy.STO2);
-
+                    if (FormNodeProperties.instance.SisoMimoMode == "XPIC(MIMO)")
+                    {
+                        this.textBoxXPIAnt0.Text = String.Format(" {0:0.0}", PHY.phy.XPI1);
+                        this.textBoxXPIAnt1.Text = String.Format(" {0:0.0}", PHY.phy.XPI2);
+                    }
                 }
                 if (FormNodeProperties.instance.SisoMimoMode == "Single SISO")
                 {
@@ -597,16 +607,21 @@ namespace WindowsFormsApplication1
                     labelGraphPER1Current.Visible = false;
                     labelGraphPER1Nack.Visible = false;
                     radioButtonPER2.Visible = false;
+                }
+                if (FormNodeProperties.instance.SisoMimoMode == "XPIC(MIMO)")
+                {
+                    groupBoxXPI.Visible = true;
+                }
+                if (FormNodeProperties.instance.LOGS_Enable)
+                {
+                    FormNodeProperties.instance.Save_Log_To_Files();
+                }
 
-                }
-                if (StartLog)
-                {
-                    LogToFile();
-                }
-                if (chkBxTimerEnabled.Checked)
-                {
-                    RunTimer();
-                }
+                //if (chkBxTimerEnabled.Checked)
+                //{
+                //    RunTimer();
+                //}
+                RunTimer();
             }
             catch (Exception ex)
             {
@@ -705,13 +720,7 @@ namespace WindowsFormsApplication1
         private void buttonResetCounters_Click(object sender, EventArgs e)
         {
             //clear all PHY counters statistics and clear all graphs
-            PHY.phy.resetAirlinkCounters();
-            spPerfChart0.Clear();
-            spPerfChart1.Clear();
-            spPerfChartRSSI.Clear();
-            spPerfChartCINR.Clear();
-            spPerfChartPER.Clear();
-            spPerfChartMCS.Clear();
+            ResetCounters();
         }
 
         private void buttonProperties_Click(object sender, EventArgs e)
@@ -719,7 +728,7 @@ namespace WindowsFormsApplication1
 
             if (FormNodeProperties.instance.IsDisposed)
             {
-                FormNodeProperties.instance.Show(this);
+                FormNodeProperties.instance.Show(this);                
             }
             else if (!FormNodeProperties.instance.Visible)
             {
@@ -729,40 +738,33 @@ namespace WindowsFormsApplication1
             {
                 FormNodeProperties.instance.WindowState = FormWindowState.Normal;
             }
+            FormNodeProperties.instance.initTabs();
             FormNodeProperties.instance.BringToFront();            
-        }        
-
-        private void checkBoxStartLog_CheckedChanged(object sender, EventArgs e)
-        {
-            if (checkBoxStartLog.Checked)
-                { StartLog = true; }
-            else
-                { StartLog = false; }
         }
 
-        private void LogToFile()
+        public void ResetCounters()
         {
-
-            //Save to log file the following information - good for long running investigation
-            string DataToSave = Convert.ToString((decimal)PHY.phy.NACK0) + " , "
-                        + Convert.ToString((decimal)PHY.phy.ACK0) + " , "
-                        + Convert.ToString((decimal)PHY.phy.NACK1) + " , "
-                        + Convert.ToString((decimal)PHY.phy.ACK1) + " , "
-                        + Convert.ToString((decimal)PHY.phy.NackCtrl) + " , "
-                        + Convert.ToString((decimal)PHY.phy.AckCtrl) + " , "
-                        + Convert.ToString((decimal)PHY.phy.CINR1avg) + " , "
-                        + Convert.ToString((decimal)PHY.phy.RSSI1) + " , "
-                        + Convert.ToString((decimal)PHY.phy.STO1) + " , "
-                        + Convert.ToString((decimal)PHY.phy.CINR2avg) + " , "
-                        + Convert.ToString((decimal)PHY.phy.RSSI2) + " , "
-                        + Convert.ToString((decimal)PHY.phy.STO2) + " , "
-                        + PHY.phy.controlChannelRx.txAnnounced1 + ","
-                        + PHY.phy.controlChannelTx.txAnnounced2;
-            
-            //write the string to file
-            sw.WriteLine(DataToSave);
-
+            PHY.phy.resetAirlinkCounters();
+            GMAC.gmac0.resetGMACCounters();
+            spPerfChart0.Clear();
+            spPerfChart1.Clear();
+            spPerfChartRSSI.Clear();
+            spPerfChartCINR.Clear();
+            spPerfChartPER.Clear();
+            spPerfChartMCS.Clear();
         }
+
+        private void buttonResetSOC_Click(object sender, EventArgs e)
+        {
+            DialogResult dialogResult = MessageBox.Show("This action will reset the unit.\n Do you want to continue?\n", "Reset SoC", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                UInt32 CG_Activate = 0x00010000;
+                DAN_write_msg wMsg = new DAN_write_msg(SoCResetAddress, CG_Activate);
+                PcapConnection.pcap.sendDanMsg(wMsg);
+            }                      
+        }
+
               
     }
 

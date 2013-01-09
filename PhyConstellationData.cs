@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO;
 
 namespace WindowsFormsApplication1
@@ -22,16 +18,16 @@ namespace WindowsFormsApplication1
         //org: 
         readonly UInt32 AFTER_EQ_OFFSET = 0x8000;
 
-        // These offsets were used by previous code (in Form1), which fetched 512 words at a time:
-        /*  static const uint[] AntOffset_afterEQ = new uint[] { 0x8000, 0xA000, 0xC000, 0xE000 };
-            //  uint[] AntOffset_beforeEQ = new uint[] { 0x0800, 0x2800, 0x4800, 0x6800 };
-            static const uint[] AntOffset_beforeEQ = new uint[] { 0x0000, 0x2000, 0x4000, 0x6000 };
+        /* These offsets were used by previous code (in Form1), which fetched 512 words at a time:
+           static const uint[] AntOffset_afterEQ = new uint[] { 0x8000, 0xA000, 0xC000, 0xE000 };
+           uint[] AntOffset_beforeEQ = new uint[] { 0x0800, 0x2800, 0x4800, 0x6800 };
+           static const uint[] AntOffset_beforeEQ = new uint[] { 0x0000, 0x2000, 0x4000, 0x6000 };         
+           Current limitation in protocol is that the reply fit in one ethernet packet.
+           These addresses based on limit of 256 words per request
          */
-        // Current limitation in protocol is that the reply fit in one ethernet packet.
-        // These addresses based on limit of 256 words per request
         readonly int REQUEST_SIZE_WORDS = 256;
         readonly UInt32[] ADDRESS_OFFSETS = { 0, 0x400, 0x2000, 0x2400, 0x4000, 0x4400, 0x6000, 0x6400 };
-        
+
         public static string folderRoot = @"C:\PTP\";
         readonly string[] fileRoot = { "Ant1_", "Ant2_" };
         readonly string[] fileSuffix = { "BeforeEQ.txt", "AfterEQ.txt" };
@@ -47,6 +43,12 @@ namespace WindowsFormsApplication1
             BEFORE = 0,
             AFTER
         }
+
+        public enum SampleTime
+        {
+            Current = 0,
+            History
+        } 
       
         // I.e.,
         //const UInt32 BaseaddressAnt1_afterEQ = 0x50000000;
@@ -67,10 +69,6 @@ namespace WindowsFormsApplication1
             this.antenna = ant;
             this.eqPosition = eq;
             this.baseAddress = baseAddr[(int)ant];
- //           if (PLL_Debug)
- //           { this.baseAddress = baseAddr_PLL[(int)ant]; }
- //           else
- //           { this.baseAddress = baseAddr[(int)ant]; }
             if (eq == EqPosition.AFTER)
             {
                 if (PLL_Debug)
@@ -81,7 +79,7 @@ namespace WindowsFormsApplication1
             this.dataCollected = 0;
             this.fileName = fileRoot[(int)ant] + fileSuffix[(int)eq];
             this.data = new UInt32[CONSTELLATION_ARRAY_LEN];
-        }
+        }     
 
         // Returns true if the msg represents data for this listener; false if 
         // the address is not recognized (reply is for some other listener)
@@ -99,10 +97,7 @@ namespace WindowsFormsApplication1
                 Console.WriteLine("BUG: unexpected reply length for constellation data msg: {0}", msg.size);
                 return true;
             }
-//            System.Console .WriteLine ("packet {0} rec'd {1}:{2}:{3},{4}  addr {5}",
-//                            dataCollected,
-//                            arrivalTime.Hour, arrivalTime.Minute, arrivalTime.Second, arrivalTime.Millisecond,
-//                            msg.address.ToString("x08"));
+
             UInt32 addrOffset = msg.address - baseAddress;
             int i;
             for (i = 0; i < ADDRESS_OFFSETS.Length; i++)
@@ -205,11 +200,10 @@ namespace WindowsFormsApplication1
             }
             return true;
         }
-        /*
-         * Moves the temp file to the file expected by Matlab.
+       
+         /* Moves the temp file to the file expected by Matlab.
          * Returns true if OK, false if an IO failure writing the file.
-         * 
-         */
+         */ 
         public bool moveToMatlabFile()
         {
             string path = folderRoot + fileName;   // e.g., "C:\PTP\Ant2_AfterEQ.txt"

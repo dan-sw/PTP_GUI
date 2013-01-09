@@ -141,7 +141,11 @@ namespace WindowsFormsApplication1
         {
             if (device != null)
             {
-                device.StopCapture();
+                try
+                {
+                    device.StopCapture();
+                }
+                catch { }
                 device.Close();
                 device = null;
             }

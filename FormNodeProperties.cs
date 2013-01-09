@@ -7,17 +7,21 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
+using System.Diagnostics;
+using System.IO.Ports;
 
 namespace WindowsFormsApplication1
 {
     public partial class FormNodeProperties : Form, MessageReplyListener
     {
+
         #region Var
 
         public bool Check_BER_Enable { get; private set; }
         public bool Check_Uncoded_BER_Enable { get; private set; }
+        public bool CG_Constelliation_Enable { get; private set; } 
         public int Permissionlevel = 1;
-        private const int PHY_GEN_PAGE = 0;
+        private const int RF_Info_PAGE = 0;
         private const int PROFILE_PAGE = 1;
         private const int PHY_AMC_PAGE = 2;
         private const int CINR_SIM_PAGE = 3;
@@ -25,7 +29,7 @@ namespace WindowsFormsApplication1
         private const int SYNC_PAGE = 5;
         private const int PHY_COUNTERS_PAGE = 6;
         private const int PHY_QOS_PAGE = 8;
-        private const int PHY_VLAN_PAGE = 9;
+        private const int Terminal = 9;
         private const int MEM_VIEWER_PAGE = 10;
         private const int CONSTELLATION_PAGE = 11;
         private const int UNIT_CONTROL_PAGE = 12;
@@ -33,6 +37,8 @@ namespace WindowsFormsApplication1
         private const int PLL_DEBUG_PAGE = 14;
         private const int CDU_PAGE = 15;
         private const int ADMINISTRATION_CONTROL_PAGE = 16;
+      //  private const int;    zzz need to add new pages
+      //  private const int;
 
         private const int SAMPLING_INTERVAL = 500;
 
@@ -48,10 +54,10 @@ namespace WindowsFormsApplication1
         private const int Max_Offset_Freq = 50;
         private const int Min_Offset_Freq = 1;
 
-        private const int BLOCK_COUNT = 8;
-        private readonly string[] blockNames = { "Memory", "Unit_Profile", "Unit_Type", "SISO_MIMO_Mode", "PLL_Debug", "PLL_Debug_PRI_hypothesis", "Spectral_Inv_Ant0", "Spectral_Inv_Ant1" };
-        private readonly UInt32[] blockAddrs = { 0xd0190000, 0xe0458C30, 0xd0190084, 0xe0458C38, 0xd0018200, 0xc652a020, 0xC6520008, 0xC6524008 };
-        private readonly byte[] blockWordCounts = { 4, 1, 1, 1, 8, 1, 1, 1 };
+        private const int BLOCK_COUNT = 9;
+        private readonly string[] blockNames = { "Memory", "Unit_Profile", "Unit_Type", "SISO_MIMO_Mode", "PLL_Debug", "PLL_Debug_PRI_hypothesis", "Spectral_Inv_Ant0", "Spectral_Inv_Ant1", "Unit_Duplex_Mode" };
+        private readonly UInt32[] blockAddrs = { 0xd0190000, 0xe0458C30, 0xd0190084, 0xe0458C38, 0xd0018200, 0xc652a020, 0xC6520008, 0xC6524008, 0xe045640c };
+        private readonly byte[] blockWordCounts = { 4, 1, 1, 1, 8, 1, 1, 1, 1 };
         //private readonly byte[] Unit_Control_blockWordCounts = { 1, 1, 1 };
 
         //Block5
@@ -66,6 +72,8 @@ namespace WindowsFormsApplication1
         public uint RunningProfile { get; private set; }
         public string UnitType { get; private set; }
         public string SisoMimoMode { get; private set; }
+        public string SW_Version {get; private set;}    // ZZZ need to implement 
+        public string Duplex_Mode { get; private set; }
 
         public static FormNodeProperties instance = new FormNodeProperties();
         private int outstandingRequestSeq = -1;
@@ -85,9 +93,58 @@ namespace WindowsFormsApplication1
         private bool SpectralInvAnt1 = false;
 
        // public bool MCSset = true;
-        public int MCSSet = 2;         
+        public int MCSSet {get; private set;} 
+
+        // Matlab ViewTool path & filename
+        string fileName = "CM0_PRI_Script.txt";
+        string sourcePath = @"C:\PTP\CDU_Scripts";
+        string targetPath = @"C:\PTP\CDU_Scripts";
+      //  public static string MatlabExecutable = @"C:\PTP\ViewTool\ViewTool.exe";
+        public static string MatLabViewToolExecutable = @"C:\PTP\ViewTool\ViewTool.exe";
+        public string MatLabViewToolargs = @"C:\PTP\ViewTool\ViewTool_Script.txt";
+
+        //Terminal Parameters
+        public int BaudRate {get; private set;} 
+        public int DataBits {get; private set;}
+        public Parity Parity { get; private set; }
+        public Handshake Handshake { get; private set; }
+        public StopBits StopBits { get; private set; }
+        public int ReadTimeout {get; private set;}
+        public int WriteTimeout {get; private set;}
+        Terminal PTPSerial = new Terminal();
+        string Terminalview = "";
+
+        TFTP32 tftpd32 = new TFTP32();
+
+        private StreamWriter PhyC;
+        private StreamWriter PhyS;
+        private StreamWriter GmacC;
+        private StreamWriter UnitI;
+        private StreamWriter RFI;
+            
+        private const int LOGS_SAMPLING_INTERVAL = 1000;
+        public bool LOGS_Enable = false;
+
+        public string linkstatus { get; private set; }
+        private enum LinkState
+        {
+            PTP_POWERUP = 0,
+            PTP_INIT,
+            PTP_CONF,
+            PTP_SYNC,
+            PTP_SCAN,
+            PTP_LINK,
+            PTP_POST_LINK,
+            PTP_LINK_STABILIZE,
+            PTP_ACTIVE,
+            PTP_LOST_LINK,
+            PTP_STOP_AMC,
+            PTP_LIMIT
+        }
 
         #endregion
+
+        #region General
 
         public FormNodeProperties()
         {
@@ -115,6 +172,7 @@ namespace WindowsFormsApplication1
             refreshTabHandlers.Add(CINR_SIM_PAGE, new RefreshTabDelegate(refreshCinrTab));
             refreshTabHandlers.Add(PHY_AMC_PAGE, new RefreshTabDelegate(refreshAmcTab));
             refreshTabHandlers.Add(MCS_PAGE, new RefreshTabDelegate(refreshMCSTab));
+            refreshTabHandlers.Add(Terminal, new RefreshTabDelegate(refreshTerminalTextBox));   
             // Register for msg replies from Pcap.  Note that the addSeqListener
             // method is used (not addListener), which will insert this listener
             // ahead of others which are just listening
@@ -123,7 +181,7 @@ namespace WindowsFormsApplication1
             // objects replies.
 
 
-            handlers = new ProcessMessageDelegate[8];
+            handlers = new ProcessMessageDelegate[9];
             handlers[0] = this.handleMemoryReadReply;
             handlers[1] = this.handleUnitProfileReadReply;
             handlers[2] = this.handleUnitTypeReadReply;
@@ -132,6 +190,7 @@ namespace WindowsFormsApplication1
             handlers[5] = this.handlehypothesisReadReply;
             handlers[6] = this.handleSpectralInvAnt0ReadReply;
             handlers[7] = this.handleSpectralInvAnt1ReadReply;
+            handlers[8] = this.handleUnitDuplexModeReadReply;
 
 
             // Register for message responses
@@ -150,15 +209,15 @@ namespace WindowsFormsApplication1
             Update_Timer.Start();
         }
 
-        private void initTabs()
+        public void initTabs()
         {
 
-            Check_BER_Enable = false;
+    //        Check_BER_Enable = false;
 
             initAmcTab();
             initSimCinrTab();
             // Another tabInit method needed for this:
-            this.ShaperMB.Text = PHY.phy.shaperValue.ToString();
+
             initConstellationTab();
             initMCSTab();
             initPHYCountersTab();
@@ -166,6 +225,11 @@ namespace WindowsFormsApplication1
             initPhyProfile();
             initPLLDebug();
             initCDUTab();
+            initTerminalTab();
+            initGMACCountersTab();
+            initPHYStatisticsTab();
+            initLOGTab();
+            initRFInfo();
         }
 
         public void FormNodeProperties_onActivate(object sender, EventArgs e)
@@ -200,11 +264,20 @@ namespace WindowsFormsApplication1
             // deny access to debug tags.
             if (Permissionlevel == 1)
             {
-                if ((selection == 14) || (selection == 15))
+                if (selection == 14)
                 {
                     selection = 13;
                 }
             }
+            if (selection == PHY_COUNTERS_PAGE)
+            {
+                buttonInterResetCounters.Visible = true;
+            }
+            else 
+            {
+                buttonInterResetCounters.Visible = false;
+            }
+
             this.tabControlNodePropertyPages.SelectedIndex = selection;
             // Any pages that show values that may change (sometimes by another tab),
             // can refresh on focus.  If it's an external app that can change the values,
@@ -238,9 +311,51 @@ namespace WindowsFormsApplication1
             {
                 initUnitControl();
             }
+            else if (selection == RF_Info_PAGE)
+            {
+                initRFInfo();
+            }
             withinFormLoad = false;
 
         }
+
+        void Timer_Tick(object sender, EventArgs e)
+        {
+            initPHYCountersTab();
+            initGMACCountersTab();
+            initPHYStatisticsTab();
+            refreshTerminalTextBox();
+        }
+
+
+        public bool MessageReplyListenerCallback(DAN_gui_msg msg, DateTime arrivalTime)
+        {
+            for (int i = 0; i < BLOCK_COUNT; i++)
+            {
+                if (msg.address == blockAddrs[i])
+                {
+                    if (msg.size != blockWordCounts[i])
+                    {
+                        Console.WriteLine("BUG: msg reply {0} wrong size = {0}", blockNames[i], msg.size);
+                        return true; // won't bother any other object with parsing it, since it IS for this object
+                    }
+                    handlers[i](msg);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void getNextValues()
+        {
+            for (int i = 0; i < BLOCK_COUNT; i++)
+            {
+                DAN_read_array_msg msg = new DAN_read_array_msg(blockAddrs[i], blockWordCounts[i]);
+                PcapConnection.pcap.sendDanMsg(msg);
+            }
+        }
+
+        #endregion
 
         #region OkCancelHandling
 
@@ -274,8 +389,8 @@ namespace WindowsFormsApplication1
         {
             PhyProfile phyProfile = (PhyProfile)comboBoxPhyProfile.SelectedItem;
             this.textBoxPhyBandwidth.Text = phyProfile.Bandwidth.ToString();
-            this.textBoxPhyDuplexMode.Text = phyProfile.DuplexMode;
-            this.textBoxPhyRange.Text = phyProfile.Range.ToString();
+            this.textBoxPhyDuplexMode.Text = Duplex_Mode;
+            this.textBoxProfileNumber.Text = RunningProfile.ToString();
             // show expected throughput calc.
             // TODO:  Just guessing at MCS, and Antenna right now.
             String antenna = "XPIC";
@@ -321,6 +436,20 @@ namespace WindowsFormsApplication1
         private void refreshProfile()
         {
             initPhyProfile();
+        }
+
+        #endregion
+
+        #region RF_Information
+         
+        private void initRFInfo()
+        {
+            textBoxConnctedBoardType.Text = PHY.phy.RF_Type;
+        }
+
+        private void refreshRFInfo()
+        {
+            initRFInfo();
         }
 
         #endregion
@@ -501,6 +630,15 @@ namespace WindowsFormsApplication1
                 case 2:
                     bw = MCS.BANDWIDTH.MHZ28;
                     break;
+                case 21:
+                    bw = MCS.BANDWIDTH.MHZ20;
+                    break;
+                case 22:
+                    bw = MCS.BANDWIDTH.MHZ10;
+                    break;
+                case 39:
+                    bw = MCS.BANDWIDTH.MHZ112;
+                    break;
             }
             this.comboBoxManualMCS0.SelectedItem = MCS.getMCS(bw, AMC.amc.McsManualId0);
             this.comboBoxManualMCS1.SelectedItem = MCS.getMCS(bw, AMC.amc.McsManualId1);
@@ -512,6 +650,7 @@ namespace WindowsFormsApplication1
             this.comboBoxManualMCS0.Items.Clear();
             this.comboBoxManualMCS1.Items.Clear();
 
+            MCSSet = (int)PHY.phy.MCS_Set;
             foreach (MCS mcs in MCS.Current_MCS_scheme)
             {
                 this.comboBoxManualMCS0.Items.Add(mcs);
@@ -526,18 +665,17 @@ namespace WindowsFormsApplication1
         // Note that this must be aware that user's changes may be lost, if the user
         // was editing the tab controls.
         // However, for this tab, that seems to be the expected behavior.
-        private void refreshAmcTab()
+        private void refreshAmcTab() //ZZZ need to verify
         {
-
             // Reload latest values from EVB
-            MCS.Current_MCS(FormSystemStatus.MCS_per_BW, MCS.BANDWIDTH.MHZ80);
+            MCS.Current_MCS(FormSystemStatus.MCS_per_BW, MCS.BANDWIDTH.MHZ80, FormNodeProperties.instance.MCSSet);
             initAmcTab();
         }
 
         //refresh MCS tab in case the EVB is not running with the defult values.
         private void refreshMCSTab()
         {
-            MCS.Current_MCS(FormSystemStatus.MCS_per_BW, MCS.BANDWIDTH.MHZ80);
+            MCS.Current_MCS(FormSystemStatus.MCS_per_BW, MCS.BANDWIDTH.MHZ80, FormNodeProperties.instance.MCSSet);
             initMCSTab();
         }
 
@@ -609,11 +747,6 @@ namespace WindowsFormsApplication1
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsPunctuation(e.KeyChar)) e.Handled = true;
         }
 
-        private void checkBoxMCSSet2_CheckedChanged(object sender, EventArgs e)
-        {
-            checkMCSSet2();
-        }
-
         private void comboBoxMCSSetSelect_SelectedIndexChanged(object sender, EventArgs e)
         {
             checkMCSSet2();
@@ -628,6 +761,10 @@ namespace WindowsFormsApplication1
                 case ("MCS Set 2"): MCSSet = 2;
                     break;
                 case ("MCS Set 3"): MCSSet = 3;
+                    break;
+                case ("MCS Set 4"): MCSSet = 4;
+                    break;
+                case ("Automatic"): MCSSet = (int)PHY.phy.MCS_Set;
                     break;
             }
     /*        if (comboBoxMCSSetSelect.Text == "MCS Set 1")
@@ -716,10 +853,6 @@ namespace WindowsFormsApplication1
 
         }
 
-        void Timer_Tick(object sender, EventArgs e)
-        {
-            initPHYCountersTab();
-        }
 
         private void checkBox_BER_COUNTER_ENABLE_CheckedChanged(object sender, EventArgs e)
         {
@@ -761,9 +894,102 @@ namespace WindowsFormsApplication1
 
         }
 
+        private void buttonInterResetCounters_Click_1(object sender, EventArgs e)
+        {
+            PHY.phy.resetAirlinkCounters();
+            GMAC.gmac0.resetGMACCounters();
+        }
+
+        #endregion
+
+        #region PHY Statistics
+
+        private void refreshPHYStatisticsTab()
+        {
+            initPHYStatisticsTab();
+        }
+
+        private void initPHYStatisticsTab()
+        {
+            // STO/CFO/XPIC/RSSI/CINR/DC Offsrt
+            dataGridViewPHYStatisticsAnt0.Rows.Clear();
+            dataGridViewPHYStatisticsAnt1.Rows.Clear();
+            dataGridViewISync.Rows.Clear();
+            dataGridViewPHYStatisticsAnt0.Rows.Add("STO:", String.Format(" {0:0.0}", PHY.phy.STO1));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("STO:", String.Format(" {0:0.0}", PHY.phy.STO2));
+            dataGridViewPHYStatisticsAnt0.Rows.Add("CFO:", String.Format(" {0:0.0}", 0));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("CFO:", String.Format(" {0:0.0}", 0));
+            dataGridViewPHYStatisticsAnt0.Rows.Add("RSSI:", String.Format(" {0:0.0} dBFS", PHY.phy.RSSI1));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("RSSI:", String.Format(" {0:0.0} dBFS", PHY.phy.RSSI2));
+            dataGridViewPHYStatisticsAnt0.Rows.Add("CINR:", String.Format(" {0:0.00} dB", PHY.phy.CINR1));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("CINR:", String.Format(" {0:0.00} dB", PHY.phy.CINR2));
+            dataGridViewPHYStatisticsAnt0.Rows.Add("DC_I:", String.Format(" {0:0.00}", (Int16)PHY.phy.DC1I));
+            dataGridViewPHYStatisticsAnt0.Rows.Add("DC_Q:", String.Format(" {0:0.00}", (Int16)PHY.phy.DC1Q));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("DC_I:", String.Format(" {0:0.00}", (Int16)PHY.phy.DC2I));
+            dataGridViewPHYStatisticsAnt1.Rows.Add("DC_Q:", String.Format(" {0:0.00}", (Int16)PHY.phy.DC2Q));
+            if (SisoMimoMode == "XPIC(MIMO)")
+            {
+                dataGridViewPHYStatisticsAnt0.Rows.Add("XPI:", String.Format(" {0:0.0}", (PHY.phy.XPI1)));
+                dataGridViewPHYStatisticsAnt1.Rows.Add("XPI:", String.Format(" {0:0.0}", (PHY.phy.XPI2)));
+            }
+            //Isync parameters
+            if (LinkIndicator.links.SyncAchieved)
+            {
+                dataGridViewISync.Rows.Add("ISync Achived", "Yes");
+            }
+            else
+            {
+                dataGridViewISync.Rows.Add("ISync Achived", "No");
+            }
+            dataGridViewISync.Rows.Add("Peak Level", String.Format(" {0:0.00}", PHY.phy.IsyncPeak));
+            dataGridViewISync.Rows.Add("Frequency Offset", String.Format(" {0:0.00}", PHY.phy.IsyncFreq));
+            dataGridViewISync.Rows.Add("Link Status", String.Format(" {0:0.00}", PHY.phy.LinkStatus));
+            linkstatus = Enum.GetName(typeof(LinkState), PHY.phy.LinkStatus);
+        }
+
+        #endregion
+
+        #region GMAC Counters
+
+        private void refreshGMACCOUNTERSTab()
+        {
+            initGMACCountersTab();
+        }
+
+        private void initGMACCountersTab()
+        {
+            //Show results at PHY counters tab
+            dataGridViewGMAC0.Rows.Clear();
+            dataGridViewGMAC1.Rows.Clear();
+            for (int i = 0; i < GMAC.gmac0.REG_GMAC0; i++)
+            { 
+                dataGridViewGMAC0.Rows.Add(GMAC.gmac0.registerNames0[i], String.Format("{0:0,0.0} f/s", GMAC.gmac0.RateCounters_GMAC0[i]), GMAC.gmac0.CurrentCounters_GMAC0[i]);
+            }
+            for (int i = 0; i < GMAC.gmac1.REG_GMAC1; i++)
+            {
+                dataGridViewGMAC1.Rows.Add(GMAC.gmac1.registerNames1[i], String.Format("{0:0,0.0} f/s", GMAC.gmac1.RateCounters_GMAC1[i]), GMAC.gmac1.CurrentCounters_GMAC1[i]);
+            }          
+        }
+
         #endregion
 
         #region UnitControl
+
+        private void handleUnitDuplexModeReadReply(DAN_gui_msg msg)
+        {
+            if (msg.data[0] == 0)
+            {
+                Duplex_Mode = "FDD";
+            }
+            else if (msg.data[0] == 1)
+            {
+                Duplex_Mode = "TDD";
+            }
+            else
+            {
+                Duplex_Mode = "NA";
+            }
+        }
 
         private void handleUnitProfileReadReply(DAN_gui_msg msg)
         {
@@ -798,49 +1024,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-        //private void handleUnitReadReply(DAN_gui_msg msg)
-        //{
-        //switch (msg.address.ToString())
-        //{
-        ////case "3762654256":        //0xE0458C30 
-        //    {
-        //        RunningProfile = msg.data[0];
-        //        break;
-        //    }
-        //case "3491299460":        //0xD0190084
-        //    {                        
-        //        if (msg.data[0] == 0)
-        //        {
-        //            UnitType = "Master";
-        //        }
-        //        else
-        //        {
-        //            UnitType = "Slave";
-        //        }
-        //        break;
-        //    }
-        //case "3762654248":        //0xe0458C38
-        //    {
-        //        if (msg.data[0] == 0)
-        //        {
-        //            SisoMimoMode = "Double SISO";
-        //        }
-        //        else if (msg.data[0] == 1)
-        //        {
-        //            SisoMimoMode = "Single SISO";
-        //        }
-        //        else if (msg.data[0] == 2)
-        //        {
-        //            SisoMimoMode = "XPIC(MIMO)";
-        //        }
-        //        break;
-        //    }
-        //}
-        //textBoxUnitType.Text = UnitType;
-        //textBoxRunningProfile.Text = RunningProfile.ToString();
-        //textBoxTransmittionMode.Text = SisoMimoMode;
-        //}
-
         private void initUnitControl()
         {
             getNextValues();
@@ -848,6 +1031,7 @@ namespace WindowsFormsApplication1
             //update all textbox
             textBoxUnitType.Text = UnitType;
             textBoxRunningProfile.Text = RunningProfile.ToString();
+            textBoxDuplexMode.Text = Duplex_Mode;
             textBoxTransmittionMode.Text = SisoMimoMode;
         }
 
@@ -961,6 +1145,7 @@ namespace WindowsFormsApplication1
         #endregion
 
         #region CONSTELLATION
+
         private void initConstellationTab()
         {
             this.buttonConstellationApply.Enabled = false;
@@ -1044,14 +1229,17 @@ namespace WindowsFormsApplication1
         {
             doConstellationEnablement();
         }
+
         private void checkBoxMatlabwithChannelEstimation_CheckedChanged(object sender, EventArgs e)
         {
             doConstellationEnablement();
         }
+
         private void comboBoxEnablePersistence_SelectedIndexChanged(object sender, EventArgs e)
         {
             doConstellationEnablement();
         }
+
         private void buttonConstellationExecutable_Click(object sender, EventArgs e)
         {
             if (openFileDialogConstellationExecutable.ShowDialog() == DialogResult.OK)
@@ -1064,6 +1252,19 @@ namespace WindowsFormsApplication1
 
         private void textBoxConstellationDataFolder_TextChanged(object sender, EventArgs e)
         {
+            doConstellationEnablement();
+        }
+
+        private void comboBoxChannelGain_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBoxChannelGain.Text == "No")
+            {
+                CG_Constelliation_Enable = false;
+            }
+            else
+            {
+                CG_Constelliation_Enable = true;
+            }
             doConstellationEnablement();
         }
 
@@ -1514,7 +1715,7 @@ namespace WindowsFormsApplication1
 
         #endregion
 
-        #region CDU
+        #region CDU & Memory Dump
 
         private void initCDUTab()
         {
@@ -1532,6 +1733,31 @@ namespace WindowsFormsApplication1
 
         private void buttonCDURunScript_Click(object sender, EventArgs e)
         {            
+        //    string Script_Name = comboBoxChooseCDUScript.Text.ToString() + ".txt";
+        //    string path = CDU.folderRoot + Script_Name;
+        //    CDU config_cdu = new CDU();
+        //    if (File.Exists(path))
+        //    {
+        //        config_cdu.CDU_configure(path);
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("CDU file {0} not located in {1}", Script_Name, CDU.folderRoot);
+        //    }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (openFileDialogMatlab.ShowDialog() == DialogResult.OK)
+            {
+                string executable = openFileDialogMatlab.FileName;
+                comboBoxMatlabFileName.Text = executable;
+            }
+        }
+
+
+        private void buttonCDURunScript_Click_1(object sender, EventArgs e)
+        {
             string Script_Name = comboBoxChooseCDUScript.Text.ToString() + ".txt";
             string path = CDU.folderRoot + Script_Name;
             CDU config_cdu = new CDU();
@@ -1545,8 +1771,7 @@ namespace WindowsFormsApplication1
             }
         }
 
-
-        private void buttonCDUDownloadResults_Click(object sender, EventArgs e)
+        private void buttonCDUDownloadResults_Click_1(object sender, EventArgs e)
         {
             CDU get_cdu_results = new CDU();
             MessageBox.Show("this operation will take approximately 1 minute");
@@ -1557,10 +1782,76 @@ namespace WindowsFormsApplication1
                 i++;
                 if (i > 200000)
                     break;
+            }           
+            get_cdu_results.CDU_Write_File("CM0_" + comboBoxChooseCDUScript.Text + ".txt", 0);            
+            //get_cdu_results.CDU_Write_File("CM1_" + comboBoxChooseCDUScript.Text + ".txt", 1);
+            MessageBox.Show("Finish Download CDU Samples");
+        }
+
+        private void buttonRunMatlabResult_Click(object sender, EventArgs e)
+        {
+            string Matlab_file = comboBoxMatlabFileName.Text;
+            string sourceFile = System.IO.Path.Combine(sourcePath, Matlab_file);
+            string destFile = System.IO.Path.Combine(targetPath, fileName);
+
+            if (System.IO.File.Exists(sourceFile))
+            {
+                System.IO.File.Copy(sourceFile, destFile, true);
+                if (System.IO.File.Exists(MatLabViewToolExecutable))
+                {
+                    Process.Start(MatLabViewToolExecutable, MatLabViewToolargs);
+                }
+                else
+                {
+                    MessageBox.Show(@"Missing Matlab executable files (file location: C:\PTP\ViewTool\)");
+                }
             }
-            MessageBox.Show("time=" + i.ToString() + " number of recived frames = " + get_cdu_results.message_counter.ToString());
-            get_cdu_results.CDU_Write_File("CM0_" + comboBoxChooseCDUScript.Text + ".txt", 0);
-            get_cdu_results.CDU_Write_File("CM1_" + comboBoxChooseCDUScript.Text + ".txt", 1);
+            else
+            {
+                MessageBox.Show("Source file error: Missing source file","Matlab Run Error");
+            }
+            
+        }
+
+        private void buttonDownloadMemory_Click_1(object sender, EventArgs e)
+        {
+            MemoryDump memory_dump = new MemoryDump();
+
+            MessageBox.Show("this operation can take few minute");
+            //       uint memory_Address = uint.Parse(comboBoxMemoryDumpDownloadAddress.Text, System.Globalization.NumberStyles.HexNumber);
+            uint memory_Address = Convert.ToUInt32(comboBoxMemoryDumpDownloadAddress.Text, 16);
+            uint size = Convert.ToUInt32(comboBoxMemoryDumpDownloadSize.Text);
+            memory_dump.Memory_Get_data(memory_Address, size);
+
+            int i = 0;
+            while (memory_dump.get_all_messages() != true)
+            {
+                i++;
+                if (i > 200000)
+                    break;
+            }
+            memory_dump.Memory_Write_File(comboBoxMemoryDumpDownloadFileName.Text);
+  
+        }
+
+        private void buttonDownloadMemory_Click(object sender, EventArgs e)
+        {
+            //MemoryDump memory_dump = new MemoryDump();
+
+            //MessageBox.Show("this operation can take few minute");
+            ////       uint memory_Address = uint.Parse(comboBoxMemoryDumpDownloadAddress.Text, System.Globalization.NumberStyles.HexNumber);
+            //uint memory_Address = Convert.ToUInt32(comboBoxMemoryDumpDownloadAddress.Text, 16);
+            //uint size = Convert.ToUInt32(comboBoxMemoryDumpDownloadSize.Text);
+            //memory_dump.Memory_Get_data(memory_Address, size);
+
+            //int i = 0;
+            //while (memory_dump.get_all_messages() != true)
+            //{
+            //    i++;
+            //    if (i > 200000)
+            //        break;
+            //}
+            //memory_dump.Memory_Write_File(comboBoxMemoryDumpDownloadFileName.Text);
         }
 
         #endregion
@@ -1581,51 +1872,525 @@ namespace WindowsFormsApplication1
 
         #endregion
 
-        public bool MessageReplyListenerCallback(DAN_gui_msg msg, DateTime arrivalTime)
+        #region Terminal
+
+        private void initTerminalTab()
         {
-            for (int i = 0; i < BLOCK_COUNT; i++)
+            comboBoxSerialNumber.Items.Clear();
+            //display the relevant serials for this specific computer
+            foreach (string port in PTPSerial.ports)
             {
-                if (msg.address == blockAddrs[i])
+                comboBoxSerialNumber.Items.Add(port);
+            }
+            //set shortcuts buttons
+            buttonSTerminal1.Text = Properties.Settings.Default.BTNName1;
+            buttonSTerminal2.Text = Properties.Settings.Default.BTNName2;
+            buttonSTerminal3.Text = Properties.Settings.Default.BTNName3;
+            buttonSTerminal4.Text = Properties.Settings.Default.BTNName4;
+            buttonSTerminal5.Text = Properties.Settings.Default.BTNName5;
+            buttonSTerminal6.Text = Properties.Settings.Default.BTNName6;
+            buttonSTerminal7.Text = Properties.Settings.Default.BTNName7;
+            buttonSTerminal8.Text = Properties.Settings.Default.BTNName8;
+            buttonSTerminal9.Text = Properties.Settings.Default.BTNName9;
+            buttonSTerminal10.Text = Properties.Settings.Default.BTNName10;
+            buttonSTerminal11.Text = Properties.Settings.Default.BTNName11;
+            buttonSTerminal12.Text = Properties.Settings.Default.BTNName12;
+            buttonSTerminal13.Text = Properties.Settings.Default.BTNName13;
+            buttonSTerminal14.Text = Properties.Settings.Default.BTNName14;
+            buttonSTerminal15.Text = Properties.Settings.Default.BTNName15;
+       //     buttonSTerminal16.Text = Properties.Settings.Default.BTNName16;
+            buttonSerialSendStraing.Enabled = false;
+        }
+
+        private void refreshTerminalTextBox()
+        {
+            Serialrefresh();
+        }
+
+        private void refreshTerminal()
+        {
+            Serialrefresh();
+            initTerminalTab();
+        }
+
+        private void buttonConnect_Disconnect_Click(object sender, EventArgs e)
+        {
+            PTPSerial.Serial_Connect_Disconnect();
+            //change send string text
+            buttonConnect_Disconnect.Text = PTPSerial.Connect_Disconnect;            
+            //disable/enable send string button
+            if (PTPSerial.Connect_Disconnect == "Connected")
+            {
+                buttonSerialSendStraing.Enabled = true;
+                GetSerialData("");
+            }
+            else
+            {
+                buttonSerialSendStraing.Enabled = false;
+            }
+
+        }
+        
+        private void buttonSerialSendStraing_Click(object sender, EventArgs e)
+        {
+            GetSerialData(textBoxSerialSendStraing.Text);
+        }
+
+        private void GetSerialData(string DataToSend)
+        {
+            PTPSerial.Write(DataToSend);
+            Terminalview += DataToSend + "\r";
+            Terminalview += PTPSerial.Read();
+            Terminalview += PTPSerial.CheckForData();
+            richTextBoxSerialrecvStraing.Clear();
+            richTextBoxSerialrecvStraing.Text = Terminalview;
+        }
+
+        private void Serialrefresh()
+        {
+            if (PTPSerial.Read() != "")
+            {
+                Terminalview += PTPSerial.Read();
+           //     Terminalview += PTPSerial.CheckForData();
+                richTextBoxSerialrecvStraing.Clear();
+                richTextBoxSerialrecvStraing.Text = Terminalview;
+            }
+            
+        }
+
+        private void richTextBoxSerialrecvStraing_TextChanged(object sender, EventArgs e)
+        {
+            //scrall to last line
+            richTextBoxSerialrecvStraing.SelectionStart = richTextBoxSerialrecvStraing.Text.Length; //Set the current caret position to the end
+            richTextBoxSerialrecvStraing.ScrollToCaret();
+        }
+
+        private void buttonClearTerminal_Click(object sender, EventArgs e)
+        {
+            richTextBoxSerialrecvStraing.Clear();
+            Terminalview = "";
+        }
+
+        private void buttonEditShortcuts_Click(object sender, EventArgs e)
+        {
+            if (FormTerminalOptions.TelnetOptioninstance.IsDisposed)
+            {
+                FormTerminalOptions.TelnetOptioninstance.Show(this);
+            }
+            else if (!FormTerminalOptions.TelnetOptioninstance.Visible)
+            {
+                FormTerminalOptions.TelnetOptioninstance.Visible = true;
+            }
+            else if (FormTerminalOptions.TelnetOptioninstance.WindowState == FormWindowState.Minimized)
+            {
+                FormTerminalOptions.TelnetOptioninstance.WindowState = FormWindowState.Normal;
+            }
+            FormTerminalOptions.TelnetOptioninstance.BringToFront();
+        }
+
+        private void buttonSTerminal1_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString1);
+        }
+
+        private void buttonSTerminal2_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString2);
+        }
+
+        private void buttonSTerminal3_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString3);
+        }
+
+        private void buttonSTerminal4_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString4);
+        }
+
+        private void buttonSTerminal5_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString5);
+        }
+
+        private void buttonSTerminal6_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString6);
+        }
+
+        private void buttonSTerminal7_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString7);
+        }
+
+        private void buttonSTerminal8_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString8);
+        }
+
+        private void buttonSTerminal9_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString9);
+        }
+
+        private void buttonSTerminal10_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString10);
+        }
+
+        private void buttonSTerminal11_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString11);
+        }
+
+        private void buttonSTerminal12_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString12);
+        }
+
+        private void buttonSTerminal13_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString13);
+        }
+
+        private void buttonSTerminal14_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString14);
+        }
+
+        private void buttonSTerminal15_Click(object sender, EventArgs e)
+        {
+            GetSerialData(Properties.Settings.Default.textBoxBTNString15);
+        }
+
+        private void buttonRefreshShortcuts_Click(object sender, EventArgs e)
+        {
+            initTerminalTab();
+        }
+
+        #endregion
+
+        #region LOGS
+
+        private void initLOGTab()
+        {
+            
+        }
+
+        private void buttonLogFilePath_Click(object sender, EventArgs e)
+        {
+            if (folderBrowserDialogLogs.ShowDialog() == DialogResult.OK)
+            {
+                string LogPath = folderBrowserDialogLogs.SelectedPath;
+                textBoxLogFilePath.Text = LogPath;
+            }
+        }
+
+        private void buttonStartLog_Click(object sender, EventArgs e)
+        {
+            string CurrentDate = DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'); ;
+            string Create_File_Name;
+            //if (checkBoxInitParamsLog.Checked)
+            //{//StartInitParamsLog= true; 
+            //}
+            //else
+            //{// StartInitParamsLog = false; 
+            //}
+            
+            if (!System.IO.Directory.Exists(textBoxLogFilePath.Text))
+            {
+                System.IO.Directory.CreateDirectory(textBoxLogFilePath.Text);
+            }
+
+            if (checkBoxLogPhyCounters.Checked)
+            {
+                try
                 {
-                    if (msg.size != blockWordCounts[i])
+                    Create_File_Name = textBoxLogFilePath.Text + @"\PhyCountersLog" + CurrentDate + ".csv";
+                    System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
+                    fs.Close();
+
+                    FileStream _PHYC = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+
+                    PhyC = new StreamWriter(_PHYC);
+                    string PHYCDataToSave = "NACK0 , ACK0 , NACK1 , ACK1 ";
+                    if (Check_BER_Enable)
                     {
-                        Console.WriteLine("BUG: msg reply {0} wrong size = {0}", blockNames[i], msg.size);
-                        return true; // won't bother any other object with parsing it, since it IS for this object
+                        PHYCDataToSave = PHYCDataToSave + " , Ant0 Bit Counter , Ant0 Bit CRC Counter" +
+                            " , Ant1 Bit Counter , Ant1 Bit CRC Counter";
                     }
-                    handlers[i](msg);
-                    return true;
+                    if (Check_Uncoded_BER_Enable)
+                    {
+                        PHYCDataToSave = PHYCDataToSave + " , Ant0 uncoded CRC " +
+                            " , Ant1 uncoded CRC , Uncoded BER Good bits";
+                    }
+
+                    PhyC.WriteLine(PHYCDataToSave);
+                    PhyC.Flush();
+                                  //PhyC.Close();
                 }
+                catch{}
             }
-            return false;
-        }
 
-        public void getNextValues()
-        {
-            for (int i = 0; i < BLOCK_COUNT; i++)
+            if (checkBoxLogGMACCounters.Checked)
             {
-                DAN_read_array_msg msg = new DAN_read_array_msg(blockAddrs[i], blockWordCounts[i]);
-                PcapConnection.pcap.sendDanMsg(msg);
+                try
+                {
+                    Create_File_Name = textBoxLogFilePath.Text + @"\GMACCountersLog" + CurrentDate + ".csv";
+                    System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
+                    fs.Close();
+
+                    FileStream _GMACC = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    GmacC = new StreamWriter(_GMACC);
+                    string GMACDataToSave = "Rx MMC ethernet packet count , Rx Good broadcast frames , Rx Good multicast frames , " +
+                "Rx CRC error frames , Rx Good unicast frames , Rx Missed due to FIFO overflow ,  Rx VLAN frames , " +
+                "Tx MMC ethernet packet count , Tx Good broadcast frames , Tx - Good multicast frames , Tx - Good and bad unicast frames , " +
+                "Tx Good and bad multicast frames , Tx - Good and bad broadcast frames" +
+                " , Rx Good broadcast frames , Rx Good multicast frames , " +
+                "Rx CRC error frames , Rx Good unicast frames , Rx Missed due to FIFO overflow ,  Rx VLAN frames , " +
+                "Tx Good broadcast frames , Tx - Good multicast frames , Tx - Good and bad unicast frames , " +
+                "Tx Good and bad multicast frames , Tx - Good and bad broadcast frames";
+                    GmacC.WriteLine(GMACDataToSave);
+                    GmacC.Flush();
+        //            sw.Close();
+                }
+                catch { }
+
             }
-        }
-
-        private void buttonDownloadMemory_Click(object sender, EventArgs e)
-        {
-            MemoryDump memory_dump = new MemoryDump();
-
-            MessageBox.Show("this operation can take few minute");
-     //       uint memory_Address = uint.Parse(textBoxMemoryDumpDownloadAddress.Text, System.Globalization.NumberStyles.HexNumber);
-            uint memory_Address = Convert.ToUInt32(textBoxMemoryDumpDownloadAddress.Text, 16); 
-            uint size = Convert.ToUInt32(textBoxMemoryDumpDownloadSize.Text);
-            memory_dump.Memory_Get_data(memory_Address, size);
-               
-            int i=0;
-            while (memory_dump.get_all_messages() != true)
+            if (checkBoxLogPhyStatisticss.Checked)
             {
-                i++;
-                if (i > 200000)
-                    break;
+                try
+                {
+                    Create_File_Name = textBoxLogFilePath.Text + @"\PhyStatisticsLog" + CurrentDate + ".csv";
+                    System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
+                    fs.Close();
+
+                    FileStream _PHYS = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    PhyS = new StreamWriter(_PHYS);
+                    string PHYSDataToSave = "STO0 , CFO0 , XPIC0 , RSSI0 , CINR0, " +
+                        "STO1 , CFO1 , XPIC1 , RSSI1 , CINR1, MCS RX , MCS TX , " +
+                        "ISYNC achived , ISYNC Peak Level , ISYNC frequency offset , RLM Link State";
+                    PhyS.WriteLine(PHYSDataToSave);
+           //         sw.Close();
+                }
+                catch { }                
             }
-            memory_dump.Memory_Write_File(textBoxMemoryDumpDownloadFileName.Text);
+            if (checkBoxUnitInfo.Checked)
+            {
+                try
+                {
+                    Create_File_Name = textBoxLogFilePath.Text + @"\UnitInfoLog" + CurrentDate + ".csv";
+                    System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
+                    fs.Close();
+
+                    FileStream _UnitInfo = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    UnitI = new StreamWriter(_UnitInfo);
+                    string UnitInfoDataToSave = "Unit Type , Running Profile , Transmition Mode , SW Version";
+                    UnitI.WriteLine(UnitInfoDataToSave);
+                    UnitI.Flush();
+          //          sw.Close();
+                }
+                catch { }
+            }
+            if (checkBoxRFInfo.Checked)
+            {
+                try
+                {
+                    Create_File_Name = textBoxLogFilePath.Text + @"\RFInfoLog" + CurrentDate + ".csv";
+                    System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
+                    fs.Close();
+
+                    FileStream _RFInfo = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    RFI = new StreamWriter(_RFInfo);
+                    string RFInfoDataToSave = "TX RF Frequnency , TX RF Power , TX Spectrum Inversion , RX RF Frequnency , RX RF Power";
+                    RFI.WriteLine(RFInfoDataToSave);
+                    RFI.Flush();
+           //         sw.Close();
+                }
+                catch { }
+            }
+            Save_Log_To_Files();
+            Save_Info_files();
+            LOGS_Enable = true;
+            buttonStartLog.Enabled = false;
         }
+
+        public void Save_Log_To_Files()
+        {
+            if (checkBoxLogPhyCounters.Checked)
+            {
+                LogPHYCToFile();
+            }
+
+            if (checkBoxLogGMACCounters.Checked)
+            {
+                LogGMACCToFile();
+            }
+            if (checkBoxLogPhyStatisticss.Checked)
+            {
+                LogPHYSToFile();
+            }          
+        }
+
+        private void Save_Info_files()
+        {
+            if (checkBoxUnitInfo.Checked)
+            {
+                LogsUnitInfoToFile();
+            }
+            if (checkBoxRFInfo.Checked)
+            {
+                LogRFInfoToFile();
+            }
+        }
+
+        private void LogPHYCToFile()
+        {
+            string PHYCDataToSave = Convert.ToString((decimal)PHY.phy.NACK0) + " , "
+                + Convert.ToString((decimal)PHY.phy.ACK0) + " , "                        
+                + Convert.ToString((decimal)PHY.phy.NACK1) + " , "
+                + Convert.ToString((decimal)PHY.phy.ACK1) + " , ";
+                if (Check_BER_Enable)
+                {
+                    PHYCDataToSave += Convert.ToString((PHY.phy.BER_Good_bits_Ant0 * 32)) + " , "
+                    + Convert.ToString((PHY.phy.BER_Error_bits_Ant0)) + " , "
+                    + Convert.ToString((PHY.phy.BER_Good_bits_Ant1 * 32)) + " , "
+                    + Convert.ToString((PHY.phy.BER_Error_bits_Ant1)) + " , ";
+                }
+                if (Check_Uncoded_BER_Enable)
+                {
+                    PHYCDataToSave += Convert.ToString((PHY.phy.Uncoded_BER_Error_bits_Ant0)) + " , "
+                    + Convert.ToString((PHY.phy.Uncoded_BER_Error_bits_Ant0)) + " , "
+                    + Convert.ToString((PHY.phy.Uncoded_BER_Good_bits * 8 * 4));
+                }
+                PhyC.WriteLine(PHYCDataToSave);
+                PhyC.Flush();
+        }
+
+        private void LogPHYSToFile()
+        {
+            // save the following:
+            //"STO0 , CFO0 , XPIC0 , RSSI0 , CINR0, " +
+            //        "STO0 , CFO0 , XPIC0 , RSSI0 , CINR0, MCS RX , MCS TX , " +
+            //        "ISYNC achived , 
+            // missing : ISYNC Peak Level , ISYNC frequency offset"
+
+            string PHYSDataToSave = Convert.ToString((decimal)PHY.phy.STO1) + " , "
+                    + Convert.ToString((decimal)PHY.phy.CFO1) + " , "
+                    + Convert.ToString((decimal)PHY.phy.XPI1) + " , "
+                    + Convert.ToString((decimal)PHY.phy.RSSI1) + " , "
+                    + Convert.ToString((decimal)PHY.phy.CINR1avg) + " , "
+                    + Convert.ToString((decimal)PHY.phy.STO2) + " , "
+                    + Convert.ToString((decimal)PHY.phy.CFO2) + " , "
+                    + Convert.ToString((decimal)PHY.phy.XPI2) + " , "
+                    + Convert.ToString((decimal)PHY.phy.RSSI2) + " , "
+                    + Convert.ToString((decimal)PHY.phy.CINR2avg) + " , "
+                    + Convert.ToString(PHY.phy.controlChannelRx.txAnnounced1) + ","
+                    + Convert.ToString(PHY.phy.controlChannelTx.txAnnounced2) + ","
+                    + Convert.ToString(LinkIndicator.links.SyncAchieved) + ","
+                    + Convert.ToString((decimal)PHY.phy.IsyncPeak) + ","
+                    + Convert.ToString((decimal)PHY.phy.IsyncFreq) + ","
+                    + Convert.ToString((decimal)PHY.phy.LinkStatus)+",";
+
+            PhyS.WriteLine(PHYSDataToSave);
+            PhyS.Flush();
+        }
+
+        private void LogGMACCToFile()
+        {
+            string GMACCDataToSave = "";
+
+            for (int i = 0; i < GMAC.gmac0.REG_GMAC0; i++)
+            {
+                GMACCDataToSave += Convert.ToString(GMAC.gmac0.CurrentCounters_GMAC0[i]) + ",";
+            }
+            for (int i = 0; i < GMAC.gmac1.REG_GMAC1; i++)
+            {
+                GMACCDataToSave += Convert.ToString(GMAC.gmac1.CurrentCounters_GMAC1[i]) + ",";
+            }
+            GmacC.WriteLine(GMACCDataToSave);
+            GmacC.Flush();
+        }
+
+        private void LogsUnitInfoToFile()
+        {
+            //No need to rewrite - this information saved only once.
+            // "Unit Type , Running Profile , Transmition Mode , SW Version"
+            string UnitInfoDataToSave = Convert.ToString(UnitType) + " , "
+                 + Convert.ToString(RunningProfile)  + " , "
+                 + Convert.ToString(SisoMimoMode)  + " , "
+                 + Convert.ToString(SW_Version);
+            UnitI.WriteLine(UnitInfoDataToSave);
+            UnitI.Flush();
+            UnitI.Close();
+            
+        }
+
+        private void LogRFInfoToFile()
+        {
+            //No need to rewrite - this information saved only once.
+            //"TX RF Frequnency , TX RF Power , TX Spectrum Inversion , RX RF Frequnency , RX RF Power"
+            RFI.Close();
+        }
+
+
+        private void buttonStopLog_Click(object sender, EventArgs e)
+        {
+            //Stop all log counters and close the streamwriter for all of them.
+         
+            LOGS_Enable = false;
+            if (checkBoxLogPhyCounters.Checked)
+            {
+                PhyC.Close();
+            }
+
+            if (checkBoxLogGMACCounters.Checked)
+            {
+                GmacC.Close();
+            }
+            if (checkBoxLogPhyStatisticss.Checked)
+            {
+                PhyS.Close();
+            }    
+            
+            buttonStartLog.Enabled = true;
+        }
+
+        #endregion
+
+        #region TFTPD32
+
+        private void buttonOpenTFTPFile_Click(object sender, EventArgs e)
+        {
+            folderBrowserDialogTFTP.SelectedPath = textBoxOpenTFTPFile.Text;
+            if (folderBrowserDialogTFTP.ShowDialog() == DialogResult.OK)
+            {
+                string dataPath = folderBrowserDialogTFTP.SelectedPath;
+                textBoxOpenTFTPFile.Text = dataPath;
+            }
+
+        }
+
+        private void buttonCloseTFTP_Click(object sender, EventArgs e)
+        {
+            tftpd32.Kill_TFTP32D();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (textBoxOpenTFTPFile.Text != "")
+            {
+                tftpd32.change_ini(textBoxOpenTFTPFile.Text);
+            }
+            else
+            {
+                tftpd32.change_ini(@"C:\");
+            }
+            tftpd32.OpenTFTP32D();
+        }
+    
+        #endregion
+
+
     }
 }

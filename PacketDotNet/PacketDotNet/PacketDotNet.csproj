@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -35,6 +35,9 @@
     <ConsolePause>false</ConsolePause>
     <GenerateDocumentation>true</GenerateDocumentation>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=a5715cc6d5c3540b" Condition=" '$(Configuration)' == 'DEBUG' ">
@@ -44,29 +47,29 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="ApplicationPacket.cs" />
-    <Compile Include="DataLinkPacket.cs" />
-    <Compile Include="EthernetPacket.cs" />
-    <Compile Include="EthernetPacketType.cs" />
-    <Compile Include="Ieee80211FrameControlField.cs" />
-    <Compile Include="Ieee80211MacFields.cs" />
-    <Compile Include="Ieee80211MacFrame.cs" />
-    <Compile Include="Ieee80211RadioPacket.cs" />
-    <Compile Include="Ieee80211RadioFields.cs" />
-    <Compile Include="Ieee80211RadioTapChannelFlags.cs" />
-    <Compile Include="Ieee80211RadioTapFields.cs" />
-    <Compile Include="Ieee80211RadioTapFlags.cs" />
-    <Compile Include="Ieee80211RadioTapType.cs" />
-    <Compile Include="IpPacket.cs" />
-    <Compile Include="Packet.cs" />
-    <Compile Include="SessionPacket.cs" />
-    <Compile Include="TcpPacket.cs" />
-    <Compile Include="UdpPacket.cs" />
-    <Compile Include="EthernetFields.cs" />
-    <Compile Include="TransportPacket.cs" />
+    <Compile Include="PacketDotNet\AssemblyInfo.cs" />
+    <Compile Include="PacketDotNet\ApplicationPacket.cs" />
+    <Compile Include="PacketDotNet\DataLinkPacket.cs" />
+    <Compile Include="PacketDotNet\EthernetPacket.cs" />
+    <Compile Include="PacketDotNet\EthernetPacketType.cs" />
+    <Compile Include="PacketDotNet\Ieee80211FrameControlField.cs" />
+    <Compile Include="PacketDotNet\Ieee80211MacFields.cs" />
+    <Compile Include="PacketDotNet\Ieee80211MacFrame.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioPacket.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioFields.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioTapChannelFlags.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioTapFields.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioTapFlags.cs" />
+    <Compile Include="PacketDotNet\Ieee80211RadioTapType.cs" />
+    <Compile Include="PacketDotNet\IpPacket.cs" />
+    <Compile Include="PacketDotNet\Packet.cs" />
+    <Compile Include="PacketDotNet\SessionPacket.cs" />
+    <Compile Include="PacketDotNet\TcpPacket.cs" />
+    <Compile Include="PacketDotNet\UdpPacket.cs" />
+    <Compile Include="PacketDotNet\EthernetFields.cs" />
+    <Compile Include="PacketDotNet\TransportPacket.cs" />
     <Compile Include="Utils\AnsiEscapeSequences.cs" />
-    <Compile Include="UdpFields.cs" />
+    <Compile Include="PacketDotNet\UdpFields.cs" />
     <Compile Include="MiscUtil\IO\EndianBinaryReader.cs" />
     <Compile Include="MiscUtil\IO\EndianBinaryWriter.cs" />
     <Compile Include="MiscUtil\Conversion\BigEndianBitConverter.cs" />
@@ -74,46 +77,46 @@
     <Compile Include="MiscUtil\Conversion\EndianBitConverter.cs" />
     <Compile Include="MiscUtil\Conversion\Endianness.cs" />
     <Compile Include="MiscUtil\Conversion\LittleEndianBitConverter.cs" />
-    <Compile Include="InternetPacket.cs" />
-    <Compile Include="IPv4Fields.cs" />
-    <Compile Include="IPv4Packet.cs" />
-    <Compile Include="IPv6Fields.cs" />
-    <Compile Include="IPv6Packet.cs" />
-    <Compile Include="IpPort.cs" />
+    <Compile Include="PacketDotNet\InternetPacket.cs" />
+    <Compile Include="PacketDotNet\IPv4Fields.cs" />
+    <Compile Include="PacketDotNet\IPv4Packet.cs" />
+    <Compile Include="PacketDotNet\IPv6Fields.cs" />
+    <Compile Include="PacketDotNet\IPv6Packet.cs" />
+    <Compile Include="PacketDotNet\IpPort.cs" />
     <Compile Include="Utils\ChecksumUtils.cs" />
-    <Compile Include="TcpFields.cs" />
-    <Compile Include="ARPFields.cs" />
-    <Compile Include="ARPPacket.cs" />
-    <Compile Include="ICMPv6Fields.cs" />
-    <Compile Include="ICMPv6Packet.cs" />
-    <Compile Include="IGMPMessageType.cs" />
-    <Compile Include="IGMPv2Packet.cs" />
-    <Compile Include="InternetLinkLayerPacket.cs" />
-    <Compile Include="IGMPv2Fields.cs" />
-    <Compile Include="LinuxSLLPacket.cs" />
-    <Compile Include="LinuxSLLFields.cs" />
-    <Compile Include="LinuxSLLType.cs" />
-    <Compile Include="IPProtocolType.cs" />
-    <Compile Include="IpVersion.cs" />
-    <Compile Include="LinkLayers.cs" />
+    <Compile Include="PacketDotNet\TcpFields.cs" />
+    <Compile Include="PacketDotNet\ARPFields.cs" />
+    <Compile Include="PacketDotNet\ARPPacket.cs" />
+    <Compile Include="PacketDotNet\ICMPv6Fields.cs" />
+    <Compile Include="PacketDotNet\ICMPv6Packet.cs" />
+    <Compile Include="PacketDotNet\IGMPMessageType.cs" />
+    <Compile Include="PacketDotNet\IGMPv2Packet.cs" />
+    <Compile Include="PacketDotNet\InternetLinkLayerPacket.cs" />
+    <Compile Include="PacketDotNet\IGMPv2Fields.cs" />
+    <Compile Include="PacketDotNet\LinuxSLLPacket.cs" />
+    <Compile Include="PacketDotNet\LinuxSLLFields.cs" />
+    <Compile Include="PacketDotNet\LinuxSLLType.cs" />
+    <Compile Include="PacketDotNet\IPProtocolType.cs" />
+    <Compile Include="PacketDotNet\IpVersion.cs" />
+    <Compile Include="PacketDotNet\LinkLayers.cs" />
     <Compile Include="Utils\HexPrinter.cs" />
-    <Compile Include="ILogInactive.cs" />
+    <Compile Include="PacketDotNet\ILogInactive.cs" />
     <Compile Include="Utils\RandomUtils.cs" />
-    <Compile Include="PayloadType.cs" />
-    <Compile Include="ICMPv6Types.cs" />
-    <Compile Include="ARPOperation.cs" />
-    <Compile Include="PPPoEPacket.cs" />
-    <Compile Include="PPPoEFields.cs" />
-    <Compile Include="PPPoECode.cs" />
-    <Compile Include="PPPPacket.cs" />
-    <Compile Include="PPPFields.cs" />
-    <Compile Include="PPPProtocol.cs" />
-    <Compile Include="ICMPv4TypeCodes.cs" />
-    <Compile Include="ICMPv4Fields.cs" />
-    <Compile Include="ICMPv4Packet.cs" />
+    <Compile Include="PacketDotNet\PayloadType.cs" />
+    <Compile Include="PacketDotNet\ICMPv6Types.cs" />
+    <Compile Include="PacketDotNet\ARPOperation.cs" />
+    <Compile Include="PacketDotNet\PPPoEPacket.cs" />
+    <Compile Include="PacketDotNet\PPPoEFields.cs" />
+    <Compile Include="PacketDotNet\PPPoECode.cs" />
+    <Compile Include="PacketDotNet\PPPPacket.cs" />
+    <Compile Include="PacketDotNet\PPPFields.cs" />
+    <Compile Include="PacketDotNet\PPPProtocol.cs" />
+    <Compile Include="PacketDotNet\ICMPv4TypeCodes.cs" />
+    <Compile Include="PacketDotNet\ICMPv4Fields.cs" />
+    <Compile Include="PacketDotNet\ICMPv4Packet.cs" />
     <Compile Include="Utils\ByteArraySegment.cs" />
-    <Compile Include="PacketOrByteArraySegment.cs" />
-    <Compile Include="LLDPPacket.cs" />
+    <Compile Include="PacketDotNet\PacketOrByteArraySegment.cs" />
+    <Compile Include="PacketDotNet\LLDPPacket.cs" />
     <Compile Include="LLDP\TLVTypes.cs" />
     <Compile Include="LLDP\ChassisSubTypes.cs" />
     <Compile Include="LLDP\PortSubTypes.cs" />
@@ -135,8 +138,8 @@
     <Compile Include="LLDP\AddressFamily.cs" />
     <Compile Include="LLDP\StringTLV.cs" />
     <Compile Include="LLDP\TLVCollection.cs" />
-    <Compile Include="WakeOnLanPacket.cs" />
-    <Compile Include="StringOutputType.cs" />
+    <Compile Include="PacketDotNet\WakeOnLanPacket.cs" />
+    <Compile Include="PacketDotNet\StringOutputType.cs" />
     <Compile Include="Tcp\NoOperation.cs" />
     <Compile Include="Tcp\EndOfOptions.cs" />
     <Compile Include="Tcp\MaximumSegmentSize.cs" />

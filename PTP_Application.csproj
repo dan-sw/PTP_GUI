@@ -52,12 +52,18 @@
   <PropertyGroup>
     <ApplicationIcon>DAN-3400.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PacketDotNet">
-      <HintPath>bin\Debug\PacketDotNet.dll</HintPath>
+    <Reference Include="PacketDotNet, Version=0.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>PacketDotNet\PacketDotNet\bin\Release\PacketDotNet.dll</HintPath>
     </Reference>
-    <Reference Include="SharpPcap">
-      <HintPath>bin\Debug\SharpPcap.dll</HintPath>
+    <Reference Include="SharpPcap, Version=3.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>SharpPcap\SharpPcap\bin\Release\SharpPcap.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -82,8 +88,15 @@
       <DependentUpon>AGaugeControl.cs</DependentUpon>
     </Compile>
     <Compile Include="CDU.cs" />
+    <Compile Include="ChannelGain.cs" />
     <Compile Include="Constellation.cs" />
     <Compile Include="AMC.cs" />
+    <Compile Include="FormTerminalOptions.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTerminalOptions.Designer.cs">
+      <DependentUpon>FormTerminalOptions.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormNodeProperties.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -95,6 +108,7 @@
     <Compile Include="MemoryDump.cs" />
     <Compile Include="MessageReplyListener.cs" />
     <Compile Include="PcapNotRunningException.cs" />
+    <Compile Include="PhyChannelGainData.cs" />
     <Compile Include="PhyControlChannel.cs" />
     <Compile Include="TabControl.cs">
       <SubType>Component</SubType>
@@ -128,6 +142,8 @@
     <Compile Include="RawSockConnection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Terminal.cs" />
+    <Compile Include="TFTP32.cs" />
     <EmbeddedResource Include="AGaugeControl.resx">
       <DependentUpon>AGaugeControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -143,6 +159,9 @@
       <DependentUpon>FormSystemStatus.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormTerminalOptions.resx">
+      <DependentUpon>FormTerminalOptions.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -153,6 +172,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -197,6 +217,9 @@
   <ItemGroup>
     <Content Include="DAN-3400.ico" />
     <Content Include="Resources\DAN-3400.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

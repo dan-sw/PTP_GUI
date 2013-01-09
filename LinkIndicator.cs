@@ -17,15 +17,15 @@ namespace WindowsFormsApplication1
     class LinkIndicator : MessageReplyListener
     {
         // These regs are available in 3 block requests
-        private const int BLOCK_COUNT = 4;
-        private readonly string[] blockNames = { "SyncTimingPll", "TxOn0", "TxOn1", "GONG" };
-        private readonly UInt32[] blockAddrs = { 0xd01900c0, 0xc6520008, 0xc6524008, 0xe045800C};
-        private readonly byte[] blockWordCounts = { 13, 1, 1, 1};
+        private const int BLOCK_COUNT = 6;
+        private readonly string[] blockNames = { "SyncTimingPll", "TxOn0", "TxOn1", "GONG", "PLL Ant0 Lock", "PLL Ant1 Lock" };
+        private readonly UInt32[] blockAddrs = { 0xd0190078, 0xc6520008, 0xc6524008, 0xe045800C, 0xd0190430, 0xd0190440 };
+        private readonly byte[] blockWordCounts = { 1, 1, 1, 1, 1, 1};
 
         // Block 0 
-        private const int SYNC_ACHIEVED_index = 0; // 0xd01900c0
+      //  private const int SYNC_ACHIEVED_index = 0; // 0xd01900c0
         private const int TIMING_LOOP_index = 8;   // 0xd01900e0
-        private const int PLL_LOCK_index = 12;  // 0xd01900f0
+     //   private const int PLL_LOCK_index = 12;  // 0xd01900f0
 
         private delegate void ProcessMessageDelegate(DAN_gui_msg msg);
         private ProcessMessageDelegate[] handlers;
@@ -36,6 +36,8 @@ namespace WindowsFormsApplication1
         private bool txOnAnt0;
         private bool txOnAnt1;
         private bool gongOn;
+        private bool pllLockAnt0;
+        private bool pllLockAnt1;
 
         public bool SyncAchieved { get { return syncAchieved; } }
         public bool TimingLoopOK { get { return timingLoopOK; } }
@@ -45,16 +47,20 @@ namespace WindowsFormsApplication1
         public bool GongOn { get { return gongOn; } }
 //        public bool TxOn { get { return txOnAnt0 && txOnAnt1 && gongOn; } }
         public bool TxOn { get { return gongOn; } }
+        public bool PllLockAnt0 { get { return pllLockAnt0; } }
+        public bool PllLockAnt1 { get { return pllLockAnt1; } }
 
         public static LinkIndicator links = new LinkIndicator();
 
         private LinkIndicator()
         {
-            handlers = new ProcessMessageDelegate[4];
+            handlers = new ProcessMessageDelegate[6];
             handlers[0] = this.handleSyncTimingPll;
             handlers[1] = this.handleTxOn0;
             handlers[2] = this.handleTxOn1;
             handlers[3] = this.handleGong;
+            handlers[4] = this.handlePLLAnt0;
+            handlers[5] = this.handlePLLAnt1;
 
             // Register for message responses
             PcapConnection.pcap.addListener(this);
@@ -62,9 +68,19 @@ namespace WindowsFormsApplication1
 
         private void handleSyncTimingPll(DAN_gui_msg msg)
         {
-            syncAchieved = (msg.data[SYNC_ACHIEVED_index] == 0 ? false : true);
-            timingLoopOK = (msg.data[TIMING_LOOP_index] == 0 ? false : true);
-            pllLock = (msg.data[PLL_LOCK_index] == 0 ? false : true);
+      //      syncAchieved = (msg.data[SYNC_ACHIEVED_index] == 0 ? false : true);
+            timingLoopOK = (((msg.data[0] == 2) || (msg.data[0] == 0))? true : false);
+        //    pllLock = (msg.data[PLL_LOCK_index] == 0 ? false : true);
+        }
+
+        private void handlePLLAnt0(DAN_gui_msg msg)
+        {
+            pllLockAnt0 = (msg.data[0] == 1 ? true : false);
+        }
+
+        private void handlePLLAnt1(DAN_gui_msg msg)
+        {
+            pllLockAnt1 = (msg.data[0] == 1 ? true : false);
         }
 
         private void handleTxOn0(DAN_gui_msg msg)

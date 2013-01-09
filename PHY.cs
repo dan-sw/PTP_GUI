@@ -5,6 +5,7 @@ namespace WindowsFormsApplication1
 {
     class PHY : MessageReplyListener
     {
+        #region Var
         /* New info from Oren 26-Oct-11:
          *         Phy measurements:
          * dm -4 0xd0190020 4
@@ -15,16 +16,11 @@ namespace WindowsFormsApplication1
          * CINR ant 0, CINR ant 1
          */
         // So, we will issue 3 block requests, for these groups
-        private const int BLOCK_COUNT = 7; 
-        private readonly string[] blockNames = { "CRCNACKThruCINR", "AVG_CINRsAndTbCounts", "PHY_ctrl_channel", "PLL_TX_Ant0", "PLL_TX_Ant1", "BER_Counters", "Uncoded_BER"};
-        private readonly UInt32[] blockAddrs = { 0xd0190000, 0xe0458020, 0xe0458c10, 0xc652002c, 0xc652402c, 0xd0190400, 0xd0190350};
-        private readonly byte[] blockWordCounts = { 20, 12, 3, 1, 1, 8, 8};
-/*
-        private const int BLOCK_COUNT = 7;
-        private readonly string[] blockNames = { "CRCNACKThruCINR", "AVG_CINRsAndTbCounts", "PHY_ctrl_channel", "PLL_TX_Ant0", "PLL_TX_Ant1", "PLL_RX_Ant0", "PLL_RX_Ant1" };
-        private readonly UInt32[] blockAddrs = { 0xd0190000, 0xe0458020, 0xe0458c10, 0xc652002c, 0xc652402c, 0xc652a02c, 0xc652e02c };
-        private readonly byte[] blockWordCounts = { 20, 12, 4, 1, 1, 1, 1 };
-*/
+        private const int BLOCK_COUNT = 8; 
+        private readonly string[] blockNames = { "CRCNACKThruCINR", "AVG_CINRsAndTbCounts", "PHY_ctrl_channel", "PLL_TX_Ant0", "PLL_TX_Ant1", "BER_Counters", "Uncoded_BER","Info_structure"};
+        private readonly UInt32[] blockAddrs = { 0xd0190000, 0xe0458020, 0xe0458c10, 0xc652002c, 0xc652402c, 0xd0190400, 0xd0190350, 0xe0456c20};
+        private readonly byte[] blockWordCounts = { 20, 12, 3, 1, 1, 8, 8, 8};
+
         // Block 0 
         private const int CRCNACKDATA_index = 0;
         private const int CRCACKDATA_index = 1;
@@ -36,6 +32,10 @@ namespace WindowsFormsApplication1
         private const int RSSI2_index = 9;
         private const int CINR1_index = 10; // 0xd0190028
         private const int CINR2_index = 11;
+        private const int DC0_index = 12;
+        private const int DC1_index = 13;
+        private const int XPI0_index = 14;
+        private const int XPI1_index = 15;
         private const int NACK0_index = 16; // 0xd0190040
         private const int ACK0_index = 17;
         private const int NACK1_index = 18;
@@ -83,6 +83,13 @@ namespace WindowsFormsApplication1
         private const int Uncoded_BER_Num_Of_Words_Acc = 6;
         private const int Uncoded_BER_Num_Of_Frames_Acc = 7;
 
+        //Block 8
+        private const int Isync_Peak_str = 0;
+        private const int Isync_Freq_str = 1;
+        private const int Link_status_str = 2;
+        private const int MCS_Set_str = 3;
+        private const int rf_Type_str = 4;
+
         private delegate void ProcessMessageDelegate(DAN_gui_msg msg); 
         private ProcessMessageDelegate[] handlers;
 
@@ -128,10 +135,18 @@ namespace WindowsFormsApplication1
 
         public double STO1 { get; private set; }
         public double STO2 { get; private set; }
+        public double CFO1 { get; private set; }        // ZZZ need to implement
+        public double CFO2 { get; private set; }        // ZZZ need to implement
         public double RSSI1 { get; private set; }
         public double RSSI2 { get; private set; }
         public double CINR1 { get; private set; }
         public double CINR2 { get; private set; }
+        public double DC1I { get; private set; }
+        public double DC1Q { get; private set; }
+        public double DC2I { get; private set; }
+        public double DC2Q { get; private set; }
+        public double XPI1 { get; private set; }       
+        public double XPI2 { get; private set; }       
 
         // Thur 27-oct: new attributes
         public double CINR1avg { get; private set; }
@@ -167,6 +182,20 @@ namespace WindowsFormsApplication1
         public UInt32 RxNumFrameIndsDelta { get { return rxNumFrameDelta; } }
         public UInt32 TxNumFrameIndsDelta { get { return txNumFrameDelta; } }
 
+        //Isync values
+        public UInt32 IsyncPeak { get; private set; }
+        public UInt32 IsyncFreq { get; private set; }
+        public UInt32 LinkStatus { get; private set; }
+        public UInt32 MCS_Set { get; private set; }
+        public String RF_Type { get; private set; }
+
+        private enum LinkStat
+        {
+            Link = 0,
+            disconnect
+        }
+        
+        
         public PhyControlChannel controlChannelTx { get; private set; }
         public PhyControlChannel controlChannelRx { get; private set; }
 
@@ -174,14 +203,19 @@ namespace WindowsFormsApplication1
         public double TX_Freq_Offset_for_profile1 { get { return 1073741824; } }
         public double RX_Freq_Offset_for_profile1 { get { return 3221225472; } }
         
-        private uint BER_Counters_Address = 0xd0190408;
+        private uint BER_Reset_Counters_Address = 0xd0190408;
         private uint Clear_BER_Counters_Value = 1;
+
+        private uint UCBER_Reset_Counters_Address = 0xd0190370;
+        private uint Clear_UCBER_Counters_Value = 1;
 
         public static PHY phy = new PHY();
 
+        #endregion
+
         private PHY()
         {
-            handlers = new ProcessMessageDelegate[7];
+            handlers = new ProcessMessageDelegate[8];
             handlers[0] = this.handleACKetc;
             handlers[1] = this.handleAvgCINRsAndTbCounts;
             handlers[2] = this.handleControlChannels;
@@ -189,6 +223,7 @@ namespace WindowsFormsApplication1
             handlers[4] = this.handlePLLPRITXAnt1;
             handlers[5] = this.handleBERCounter;
             handlers[6] = this.handleUncodedBERCounter;
+            handlers[7] = this.handleLinkStatistics;
 
             // Register for message responses
             PcapConnection.pcap.addListener(this);
@@ -223,11 +258,19 @@ namespace WindowsFormsApplication1
             
             if (FormNodeProperties.instance.Check_BER_Enable)
             {
-                DAN_write_msg Msg = new DAN_write_msg(BER_Counters_Address, Clear_BER_Counters_Value);
+                DAN_write_msg Msg = new DAN_write_msg(BER_Reset_Counters_Address, Clear_BER_Counters_Value);
                 PcapConnection.pcap.sendDanMsg(Msg);
                 // refresh my cached values
                 getNextValues();
-            }                
+            }
+
+            if (FormNodeProperties.instance.Check_Uncoded_BER_Enable)
+            {
+                DAN_write_msg Msg = new DAN_write_msg(UCBER_Reset_Counters_Address, Clear_UCBER_Counters_Value);
+                PcapConnection.pcap.sendDanMsg(Msg);
+                // refresh my cached values
+                getNextValues();
+            }   
         }
         
         private void handleControlChannels(DAN_gui_msg msg)
@@ -256,7 +299,7 @@ namespace WindowsFormsApplication1
             txNumFrameInds = msg.data[TXNUMFRAMEINDS_index];
         }        
 
-       private void handlePLLPRIRXAnt0(DAN_gui_msg msg)
+        private void handlePLLPRIRXAnt0(DAN_gui_msg msg)
         {
             //if (msg.data[PLL_RX_Ant0_Freq_Offset] == RX_Freq_Offset_for_profile1)
             //{ RXPLLAnt0FreqOffset = 0; }
@@ -305,8 +348,12 @@ namespace WindowsFormsApplication1
             // RSSI - previously, I thought it had 5 bits of fraction, and 
             // I divided by 32.  This new equation effection 27-oct-2011:
             RSSI1 = (((double)msg.data[RSSI1_index])/ 32) - 90.5;
+            if ((((double)msg.data[RSSI1_index]) / (double)32.0) > 256)
+            { RSSI1 = 0; }
             //Console.WriteLine("Rec'd RSSI1 = {0:X8} ({0}), calculated RSSI1={1}", msg.data[8], RSSI1);
             RSSI2 = (((double)msg.data[RSSI2_index]) / 32) - 90.5;
+            if ((((double)msg.data[RSSI2_index]) / (double)32.0) > 256)
+            { RSSI2 = 0; }
 
             // Apparently CINR has 5 bits of fractional data
             // CINR1 = ((double)msg.data[CINR1_index]) / (double)32.0;
@@ -317,7 +364,12 @@ namespace WindowsFormsApplication1
             CINR2 = Math.Min((((double)msg.data[CINR2_index]) / (double)32.0), 42);
             if ((((double)msg.data[CINR2_index]) / (double)32.0) > 128)
             { CINR2 = 0; }
-            
+            DC1I = (double)((msg.data[DC0_index] & 0xffff0000) >> 16);
+            DC1Q = (double)((msg.data[DC0_index] & 0x0000ffff));
+            DC2I = (double)((msg.data[DC1_index] & 0xffff0000) >> 16);
+            DC2Q = (double)((msg.data[DC1_index] & 0x0000ffff));
+            XPI1 = ((((double)(msg.data[XPI0_index])) - ((double)msg.data[RSSI1_index])) / 32.0);
+            XPI2 = ((((double)(msg.data[XPI1_index])) - ((double)msg.data[RSSI2_index])) / 32.0); 
             
 
             // New antenna-specific Ack and Nack (9Nov2011)
@@ -341,6 +393,25 @@ namespace WindowsFormsApplication1
             Uncoded_BER_Error_bits_Ant0 = msg.data[Uncoded_BER_Acc_Error_bits_Ant0];
             Uncoded_BER_Error_bits_Ant1 = msg.data[Uncoded_BER_Acc_Error_bits_Ant1];
             Uncoded_BER_Good_bits = msg.data[Uncoded_BER_Num_Of_Words_Acc];
+        }
+
+        private void handleLinkStatistics(DAN_gui_msg msg)
+        {
+            string RFTypeReg;
+            string tempRFType;
+            IsyncPeak = msg.data[Isync_Peak_str];
+            IsyncFreq = msg.data[Isync_Freq_str];
+            LinkStatus = msg.data[Link_status_str];
+            MCS_Set = msg.data[MCS_Set_str];
+            RF_Type = "";
+            RFTypeReg = (msg.data[rf_Type_str + 3].ToString("X") + msg.data[rf_Type_str + 2].ToString("X") + msg.data[rf_Type_str + 1].ToString("X") + msg.data[rf_Type_str].ToString("X"));
+
+            while (RFTypeReg.Length > 0)
+            {
+                tempRFType = System.Convert.ToChar(System.Convert.ToUInt32(RFTypeReg.Substring(RFTypeReg.Length-2, 2), 16)).ToString();              
+                RF_Type = RF_Type + tempRFType;                
+                RFTypeReg = RFTypeReg.Substring(0, RFTypeReg.Length - 2);
+            }
         }
 
         // Returns true if the msg represents data for this listener; false if 

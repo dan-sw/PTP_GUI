@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace WindowsFormsApplication1
@@ -9,21 +6,20 @@ namespace WindowsFormsApplication1
     class CDU : MessageReplyListener
     {
         public static string folderRoot = @"C:\PTP\CDU_Scripts\";
-        public static string[] Script_Name = {"PRI_Script","FIR_Script", "FFT_In_Script","FFT_Out_Script"};
+        public static string[] Script_Name = { "PRI_Script_Ant0", "PRI_Script_Ant1", "PRI_Script_Ant4", "FIR_Script", "FFT_In_Script", "FFT_Out_Script" };
         private static uint[] CM_address = {0x94000000, 0x95E84800};
-        private static uint REQUEST_SIZE_Samples = 10000;
+        private static uint REQUEST_SIZE_Samples = 100000;
         static uint data_size = REQUEST_SIZE_Samples*2;
         private static uint REQUEST_SIZE_WORDS = 256;
-        private static uint Number_of_Req = ((REQUEST_SIZE_Samples * 2) / REQUEST_SIZE_WORDS);
+        private static uint Number_of_Req = (data_size / REQUEST_SIZE_WORDS);
         private UInt32[] data_CM0;
         private UInt32[] data_CM1;
         public int message_counter = 0;
 
-
         public void CDU_configure(string file_to_upload)
         {
-             FileInfo fi = new FileInfo(file_to_upload);
-             StreamReader reader = fi.OpenText();
+            FileInfo file = new FileInfo(file_to_upload);
+            StreamReader reader = file.OpenText();
             string line;
             while ((line = reader.ReadLine()) != null)
             {
@@ -88,6 +84,12 @@ namespace WindowsFormsApplication1
             PcapConnection.pcap.removeListener(this);
             return true;
         }
+
+        public void CDU_Matlab(string filename)
+        {
+
+        }
+
         public bool get_all_messages()
         {
             if (message_counter == Number_of_Req)

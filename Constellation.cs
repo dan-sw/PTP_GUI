@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.Diagnostics;
-using System.Windows.Forms;
 using System.Threading;
 
 namespace WindowsFormsApplication1
 {
     class Constellation
     {
+        #region Var
         private static Process matlabProcess = null;
         //public static string cmd = @"C:\PTP\logic_004\logic.exe";
-        public static string constellationExecutable = @"C:\PTP\logic_007\logic.exe";
+        public static string constellationExecutable = @"C:\PTP\logic_012\logic.exe";
         // See PhyConstellationData for dataFileFolder
         public static string folderRoot = @"C:\PTP\";
 
@@ -21,15 +18,14 @@ namespace WindowsFormsApplication1
         public static bool PLLDebug = true;
         public static int persistence = 0;
         private PhyConstellationData[] constellations;
+        private PhyChannelGainData[] ChannelsGain;
         public static int[] FFTsizes = { 256, 512 };
         public static int selectedFFT = 0; // 256
         public static bool New_Matlab = true;
-        // TODO: Re-enable this, if you want automatic FFT size selection,
-        // based on current modulation.  But, the design wasn't complete - when
-        // the MCS changes, no code in here was smart enough to stop/restart matlab.
-        // Then again, the best way to handle rapidly changing FFT size is to put it
-        // in the data files, not stop/restart logic.exe.
-        public int constellationMode = 256;  //  4, 16, 64, 256
+
+        private bool CGEnable = false;
+        private bool CGStart = false;
+        #endregion        
         
         public enum TRIGGER_RETURN_CODE
         {
@@ -48,12 +44,22 @@ namespace WindowsFormsApplication1
 
         public Constellation()
         {
+            CGStart = false;
             constellations = new PhyConstellationData[4];
             // Order is important, for logic.exe command line expects 1After, 2After, 1Before, 2Before
             constellations[0] = new PhyConstellationData(PhyConstellationData.Antenna.ANT1, PhyConstellationData.EqPosition.AFTER,PLLDebug);
             constellations[1] = new PhyConstellationData(PhyConstellationData.Antenna.ANT2, PhyConstellationData.EqPosition.AFTER, PLLDebug);
             constellations[2] = new PhyConstellationData(PhyConstellationData.Antenna.ANT1, PhyConstellationData.EqPosition.BEFORE, PLLDebug);
             constellations[3] = new PhyConstellationData(PhyConstellationData.Antenna.ANT2, PhyConstellationData.EqPosition.BEFORE, PLLDebug);
+
+            if (FormNodeProperties.instance.CG_Constelliation_Enable)
+            {
+                ChannelsGain = new PhyChannelGainData[2];
+                ChannelsGain[0] = new PhyChannelGainData(PhyChannelGainData.SampleTime.Current);
+                ChannelsGain[1] = new PhyChannelGainData(PhyChannelGainData.SampleTime.History);
+                ChannelsGain[0].ChannelGainEnableRead();
+                CGStart = true;
+            }
         }
 
         /*
@@ -65,12 +71,24 @@ namespace WindowsFormsApplication1
          */
         public TRIGGER_RETURN_CODE trigger()
         {
+            if (CGStart)
+            {
+                CGEnable = FormNodeProperties.instance.CG_Constelliation_Enable && ChannelsGain[0].ChannelGainReadRegister;
+            }
+            else
+            {
+                CGEnable = false;
+            }
             string[] log = new string[20];
             int logIndex = 0;
             System.Diagnostics.Stopwatch st = new System.Diagnostics.Stopwatch();
-            //System.Console.WriteLine("\nStarting trigger()");
+
             st.Start();
-            //string[logIndex ++] = new String("Starting: " + st.ElapsedMilliseconds.ToString());
+            //activating channel gain dump to memory
+            if (CGEnable)
+            {
+                ChannelsGain[0].ChannelGainActivate(true);
+            }
             foreach (PhyConstellationData constellation in constellations)
             {
                 int loop = 0;
@@ -107,6 +125,45 @@ namespace WindowsFormsApplication1
                     return TRIGGER_RETURN_CODE.FILE_WRITE_FAILURE; // failed
                 }
             }
+            /*stop saving the channel gain information into memory location (we can't read this information
+             * while the system writing to this location).
+             * */
+            if (CGEnable)
+            {
+                ChannelsGain[0].ChannelGainActivate(false);
+
+                foreach (PhyChannelGainData ChannelGain in ChannelsGain)
+                {
+                    int loop = 0;
+                    ChannelGain.refreshData();
+                    Thread.Sleep(3); // 3 ms
+                    // Waits, at most, 3 seconds for the EVB replies
+                    while (!ChannelGain.isDataReady() && (loop++ < 300))
+                    {
+                        Thread.Sleep(10);
+                    }
+                    //System.Console.WriteLine("Data ready {0} for constellation part {3}, after {1} loops (elapsed ms={2})",
+                    if (loop >= 300)
+                    {
+                        return TRIGGER_RETURN_CODE.SOC_UNRESPONSIVE;
+                    }
+                    logIndex++;
+                    if (!ChannelGain.flushToTempFile())
+                    {
+                        // flushToFile only returns false after retrying several times,
+                        // so it's appropriate to cancel the constellation process (i.e.,
+                        // no need to continue for the other constellation files)
+                        return TRIGGER_RETURN_CODE.FILE_WRITE_FAILURE;
+                    }
+                }
+                foreach (PhyChannelGainData ChannelGain in ChannelsGain)
+                {
+                    if (!ChannelGain.moveToMatlabFile())
+                    {
+                        return TRIGGER_RETURN_CODE.FILE_WRITE_FAILURE; // failed
+                    }
+                }
+            }
             uint modulation = PHY.phy.controlChannelRx.txAnnounced1;
             string modString = MCS.getMCS(MCS.BANDWIDTH.MHZ80, modulation).modulation;
             int constellationMode = 256;
@@ -136,11 +193,28 @@ namespace WindowsFormsApplication1
             else
                 { selectedFFT = 0; }
 
+            if (CGEnable)
+            {
+                Channel_estimation_graph_enable = 1;
+            }
+            else
+            {
+                Channel_estimation_graph_enable = 0;
+            }
 
-            string args_logic4 = String.Format("{0} {1} {2} {3} {4} {5}",
+            string args_logic4;
+            if (CGEnable)
+            {
+                args_logic4 = String.Format("{0} {1} {2} {3} {4} {5}",
+                constellations[0].filePath, constellations[1].filePath, ChannelsGain[0].filePath, ChannelsGain[1].filePath,
+                constellationMode, FFTsizes[selectedFFT]);
+            }
+            else
+            {
+                args_logic4 = String.Format("{0} {1} {2} {3} {4} {5}",
                 constellations[0].filePath, constellations[1].filePath, constellations[2].filePath, constellations[3].filePath,
                 constellationMode, FFTsizes[selectedFFT]);
-            
+            }
             //create new file - MatLab params file that will include: 4 file names, FFTsize, constallation, 
             // persistence enable/disable.
             
@@ -160,10 +234,20 @@ namespace WindowsFormsApplication1
             try
             {
                 TextWriter tw = new StreamWriter(paramsfilePath);
-                tw.WriteLine(constellations[0].filePath + "\n" + constellations[1].filePath + "\n" +
-                             constellations[2].filePath + "\n" + constellations[3].filePath + "\n" +                             
-                             constellationMode.ToString() + "\n" + FFTsizes[selectedFFT].ToString() + "\n" + persistence.ToString()
-                             + "\n" + Channel_estimation_graph_enable);
+                if (CGEnable)
+                {
+                    tw.WriteLine(constellations[0].filePath + "\n" + constellations[1].filePath + "\n" +
+                                 ChannelsGain[0].filePath + "\n" + ChannelsGain[1].filePath + "\n" +
+                                 constellationMode.ToString() + "\n" + FFTsizes[selectedFFT].ToString() + "\n" + persistence.ToString()
+                                 + "\n" + Channel_estimation_graph_enable);
+                }
+                else
+                {
+                    tw.WriteLine(constellations[0].filePath + "\n" + constellations[1].filePath + "\n" +
+                                 constellations[2].filePath + "\n" + constellations[3].filePath + "\n" +
+                                 constellationMode.ToString() + "\n" + FFTsizes[selectedFFT].ToString() + "\n" + persistence.ToString()
+                                 + "\n" + Channel_estimation_graph_enable);
+                }
                 tw.Close();
             }
             catch (Exception ex)
@@ -209,7 +293,13 @@ namespace WindowsFormsApplication1
             {
                 constellation.cancelListener();
             }
-
+            if (CGEnable)
+            {
+                foreach (PhyChannelGainData ChannelGain in ChannelsGain)
+                {
+                    ChannelGain.cancelListener();
+                }
+            }
             if (matlabProcess != null)
             {
                 try
