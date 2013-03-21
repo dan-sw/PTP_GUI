@@ -1,0 +1,30 @@
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.AGaugeControl.resources
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormNodeProperties.resources
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormDiscover.resources
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormSystemStatus.resources
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.Properties.Resources.resources
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\Documents and Settings\lab\Desktop\dan-sw-PTP_GUI-version2\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.write.1.tlog
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.AGaugeControl.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormNodeProperties.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormDiscover.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormSystemStatus.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.Properties.Resources.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.read.1.tlog
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.write.1.tlog
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\DAN3200_PMC.exe
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\DAN3200_PMC.pdb
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\PacketDotNet.dll
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\SharpPcap.dll
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\SharpPcap.xml
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\DAN3200_PMC.exe
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\DAN3200_PMC.pdb
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\WindowsFormsApplication1.FormTerminalOptions.resources
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\bin\Debug\DAN3200_PMC.exe.config
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.read.5477.tlog
+C:\Documents and Settings\lab\Desktop\PTP_GUI-Update1\dan-sw-PTP_GUI-90be7b3\obj\x86\Debug\GenerateResource.write.5477.tlog
+C:\Users\hkosta\Desktop\PTP_GUI_10_3_2013\PTP_GUI1\bin\Debug\DAN3200_PMC.exe.config
+C:\Users\hkosta\Desktop\PTP_GUI_10_3_2013\PTP_GUI1\obj\x86\Debug\DAN3200_PMC.exe
+C:\Users\hkosta\Desktop\PTP_GUI_10_3_2013\PTP_GUI1\obj\x86\Debug\DAN3200_PMC.pdb

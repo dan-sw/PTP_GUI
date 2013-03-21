@@ -1253,6 +1253,7 @@
             "MCS Set 3",
             "MCS Set 4",
             "Automatic"});
+            this.comboBoxMCSSetSelect.Text = "Automatic";
             this.comboBoxMCSSetSelect.Location = new System.Drawing.Point(257, 259);
             this.comboBoxMCSSetSelect.Name = "comboBoxMCSSetSelect";
             this.comboBoxMCSSetSelect.Size = new System.Drawing.Size(121, 21);

@@ -401,8 +401,22 @@ namespace WindowsFormsApplication1
             string tempRFType;
             IsyncPeak = msg.data[Isync_Peak_str];
             IsyncFreq = msg.data[Isync_Freq_str];
-            LinkStatus = msg.data[Link_status_str];
-            MCS_Set = msg.data[MCS_Set_str];
+            if ((msg.data[Link_status_str] >= 0) && (msg.data[Link_status_str] <= 11))
+            {
+                LinkStatus = msg.data[Link_status_str];
+            }
+            else
+            {
+                LinkStatus = 0;
+            }
+            if ((msg.data[MCS_Set_str] >= 0) && (msg.data[MCS_Set_str] < 5))
+            {
+                MCS_Set = msg.data[MCS_Set_str];
+            }
+            else
+            {
+                MCS_Set = 2;
+            }
             RF_Type = "";
             RFTypeReg = (msg.data[rf_Type_str + 3].ToString("X") + msg.data[rf_Type_str + 2].ToString("X") + msg.data[rf_Type_str + 1].ToString("X") + msg.data[rf_Type_str].ToString("X"));
 

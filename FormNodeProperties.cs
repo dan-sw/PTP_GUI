@@ -93,7 +93,8 @@ namespace WindowsFormsApplication1
         private bool SpectralInvAnt1 = false;
 
        // public bool MCSset = true;
-        public int MCSSet {get; private set;} 
+        public int MCSSet {get; private set;}
+        private bool MCSSetAutomatic = true;
 
         // Matlab ViewTool path & filename
         string fileName = "CM0_PRI_Script.txt";
@@ -117,10 +118,15 @@ namespace WindowsFormsApplication1
         TFTP32 tftpd32 = new TFTP32();
 
         private StreamWriter PhyC;
+        private FileInfo PhyCfi;
         private StreamWriter PhyS;
+        private FileInfo PhySfi;
         private StreamWriter GmacC;
+        private FileInfo GmacCfi;
         private StreamWriter UnitI;
         private StreamWriter RFI;
+        private string Timer;
+        
             
         private const int LOGS_SAMPLING_INTERVAL = 1000;
         public bool LOGS_Enable = false;
@@ -649,8 +655,10 @@ namespace WindowsFormsApplication1
             this.checkBoxAMC.Checked = AMC.amc.AutoAMC;
             this.comboBoxManualMCS0.Items.Clear();
             this.comboBoxManualMCS1.Items.Clear();
-
-            MCSSet = (int)PHY.phy.MCS_Set;
+            if (!MCSSetAutomatic)
+            {
+                MCSSet = (int)PHY.phy.MCS_Set;
+            }
             foreach (MCS mcs in MCS.Current_MCS_scheme)
             {
                 this.comboBoxManualMCS0.Items.Add(mcs);
@@ -757,23 +765,22 @@ namespace WindowsFormsApplication1
             switch (comboBoxMCSSetSelect.Text)
             {
                 case ("MCS Set 1"): MCSSet = 1;
+                    MCSSetAutomatic = false;
                     break;
                 case ("MCS Set 2"): MCSSet = 2;
+                    MCSSetAutomatic = false;
                     break;
                 case ("MCS Set 3"): MCSSet = 3;
+                    MCSSetAutomatic = false;
                     break;
                 case ("MCS Set 4"): MCSSet = 4;
+                    MCSSetAutomatic = false;
                     break;
                 case ("Automatic"): MCSSet = (int)PHY.phy.MCS_Set;
+                    MCSSetAutomatic = true;
                     break;
             }
-    /*        if (comboBoxMCSSetSelect.Text == "MCS Set 1")
-            { MCSset = 1; }
-            if (checkBoxMCSSet2.Checked)
-            { MCSset = true; }
-            else
-            { MCSset = false; }
-    */
+    
             
             this.buttonPropertiesOK.Enabled = true;
         }
@@ -2088,15 +2095,14 @@ namespace WindowsFormsApplication1
 
         private void buttonStartLog_Click(object sender, EventArgs e)
         {
+            StartLogRecording();
+        }
+
+        private void StartLogRecording()
+        {
             string CurrentDate = DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'); ;
             string Create_File_Name;
-            //if (checkBoxInitParamsLog.Checked)
-            //{//StartInitParamsLog= true; 
-            //}
-            //else
-            //{// StartInitParamsLog = false; 
-            //}
-            
+  
             if (!System.IO.Directory.Exists(textBoxLogFilePath.Text))
             {
                 System.IO.Directory.CreateDirectory(textBoxLogFilePath.Text);
@@ -2109,11 +2115,11 @@ namespace WindowsFormsApplication1
                     Create_File_Name = textBoxLogFilePath.Text + @"\PhyCountersLog" + CurrentDate + ".csv";
                     System.IO.FileStream fs = System.IO.File.Create(Create_File_Name);
                     fs.Close();
-
+                    
                     FileStream _PHYC = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
-
+                    PhyCfi = new FileInfo(Create_File_Name);
                     PhyC = new StreamWriter(_PHYC);
-                    string PHYCDataToSave = "NACK0 , ACK0 , NACK1 , ACK1 ";
+                    string PHYCDataToSave = "Time, NACK0 , ACK0 , NACK1 , ACK1 ";
                     if (Check_BER_Enable)
                     {
                         PHYCDataToSave = PHYCDataToSave + " , Ant0 Bit Counter , Ant0 Bit CRC Counter" +
@@ -2127,7 +2133,6 @@ namespace WindowsFormsApplication1
 
                     PhyC.WriteLine(PHYCDataToSave);
                     PhyC.Flush();
-                                  //PhyC.Close();
                 }
                 catch{}
             }
@@ -2141,8 +2146,9 @@ namespace WindowsFormsApplication1
                     fs.Close();
 
                     FileStream _GMACC = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    GmacCfi = new FileInfo(Create_File_Name);
                     GmacC = new StreamWriter(_GMACC);
-                    string GMACDataToSave = "Rx MMC ethernet packet count , Rx Good broadcast frames , Rx Good multicast frames , " +
+                    string GMACDataToSave = "Time, Rx MMC ethernet packet count , Rx Good broadcast frames , Rx Good multicast frames , " +
                 "Rx CRC error frames , Rx Good unicast frames , Rx Missed due to FIFO overflow ,  Rx VLAN frames , " +
                 "Tx MMC ethernet packet count , Tx Good broadcast frames , Tx - Good multicast frames , Tx - Good and bad unicast frames , " +
                 "Tx Good and bad multicast frames , Tx - Good and bad broadcast frames" +
@@ -2152,7 +2158,6 @@ namespace WindowsFormsApplication1
                 "Tx Good and bad multicast frames , Tx - Good and bad broadcast frames";
                     GmacC.WriteLine(GMACDataToSave);
                     GmacC.Flush();
-        //            sw.Close();
                 }
                 catch { }
 
@@ -2166,12 +2171,12 @@ namespace WindowsFormsApplication1
                     fs.Close();
 
                     FileStream _PHYS = new FileStream(Create_File_Name, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                    PhySfi = new FileInfo(Create_File_Name);
                     PhyS = new StreamWriter(_PHYS);
-                    string PHYSDataToSave = "STO0 , CFO0 , XPIC0 , RSSI0 , CINR0, " +
+                    string PHYSDataToSave = "Time, STO0 , CFO0 , XPIC0 , RSSI0 , CINR0, " +
                         "STO1 , CFO1 , XPIC1 , RSSI1 , CINR1, MCS RX , MCS TX , " +
                         "ISYNC achived , ISYNC Peak Level , ISYNC frequency offset , RLM Link State";
                     PhyS.WriteLine(PHYSDataToSave);
-           //         sw.Close();
                 }
                 catch { }                
             }
@@ -2188,7 +2193,6 @@ namespace WindowsFormsApplication1
                     string UnitInfoDataToSave = "Unit Type , Running Profile , Transmition Mode , SW Version";
                     UnitI.WriteLine(UnitInfoDataToSave);
                     UnitI.Flush();
-          //          sw.Close();
                 }
                 catch { }
             }
@@ -2205,7 +2209,6 @@ namespace WindowsFormsApplication1
                     string RFInfoDataToSave = "TX RF Frequnency , TX RF Power , TX Spectrum Inversion , RX RF Frequnency , RX RF Power";
                     RFI.WriteLine(RFInfoDataToSave);
                     RFI.Flush();
-           //         sw.Close();
                 }
                 catch { }
             }
@@ -2217,6 +2220,7 @@ namespace WindowsFormsApplication1
 
         public void Save_Log_To_Files()
         {
+            Timer = DateTime.Now.ToString("HH:mm:ss tt");
             if (checkBoxLogPhyCounters.Checked)
             {
                 LogPHYCToFile();
@@ -2229,7 +2233,12 @@ namespace WindowsFormsApplication1
             if (checkBoxLogPhyStatisticss.Checked)
             {
                 LogPHYSToFile();
-            }          
+            }
+            if ((PhyCfi.Length > 10000) && (GmacCfi.Length > 10000) || (PhySfi.Length > 100000))
+            {
+                StopLogRecording();
+                StartLogRecording();
+            }
         }
 
         private void Save_Info_files()
@@ -2246,7 +2255,8 @@ namespace WindowsFormsApplication1
 
         private void LogPHYCToFile()
         {
-            string PHYCDataToSave = Convert.ToString((decimal)PHY.phy.NACK0) + " , "
+            string PHYCDataToSave = Timer + " , "
+                + Convert.ToString((decimal)PHY.phy.NACK0) + " , "
                 + Convert.ToString((decimal)PHY.phy.ACK0) + " , "                        
                 + Convert.ToString((decimal)PHY.phy.NACK1) + " , "
                 + Convert.ToString((decimal)PHY.phy.ACK1) + " , ";
@@ -2275,7 +2285,8 @@ namespace WindowsFormsApplication1
             //        "ISYNC achived , 
             // missing : ISYNC Peak Level , ISYNC frequency offset"
 
-            string PHYSDataToSave = Convert.ToString((decimal)PHY.phy.STO1) + " , "
+            string PHYSDataToSave = Timer + " , "
+                    + Convert.ToString((decimal)PHY.phy.STO1) + " , "
                     + Convert.ToString((decimal)PHY.phy.CFO1) + " , "
                     + Convert.ToString((decimal)PHY.phy.XPI1) + " , "
                     + Convert.ToString((decimal)PHY.phy.RSSI1) + " , "
@@ -2298,7 +2309,7 @@ namespace WindowsFormsApplication1
 
         private void LogGMACCToFile()
         {
-            string GMACCDataToSave = "";
+            string GMACCDataToSave = Timer + " , ";
 
             for (int i = 0; i < GMAC.gmac0.REG_GMAC0; i++)
             {
@@ -2333,8 +2344,12 @@ namespace WindowsFormsApplication1
             RFI.Close();
         }
 
-
         private void buttonStopLog_Click(object sender, EventArgs e)
+        {
+            StopLogRecording();
+        }
+
+        private void StopLogRecording()
         {
             //Stop all log counters and close the streamwriter for all of them.
          
